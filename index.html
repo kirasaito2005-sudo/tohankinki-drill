@@ -109,6 +109,8 @@ h1{font-family:var(--display);font-weight:900;font-size:clamp(1.5rem,5vw,2rem);l
 .btn.danger.go{background:var(--stop);color:var(--sheet)}
 .note{font-size:.8rem;color:var(--muted);margin:0}
 .msg{font-size:.85rem;font-weight:700}
+.hrow{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
+.sndctl{display:flex;gap:6px}
 .home{display:flex;flex-direction:column;gap:6px}
 .homebar{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap}
 .ghead{font:700 .9rem var(--display);margin:14px 0 8px;padding-bottom:4px;border-bottom:2px solid var(--stop);letter-spacing:.04em}
@@ -150,7 +152,13 @@ footer a{color:inherit}
 <body>
 <div class="wrap">
   <header>
-    <h1><span class="mark" aria-hidden="true"></span>してはいけないことドリル</h1>
+    <div class="hrow">
+      <h1><span class="mark" aria-hidden="true"></span>してはいけないことドリル</h1>
+      <div class="sndctl">
+        <button class="chip" id="bgm" aria-pressed="true">♪ BGM ON</button>
+        <button class="chip" id="snd" aria-pressed="true">効果音 ON</button>
+      </div>
+    </div>
     <p class="sub">登録販売者・手引き 別表5-1「してはいけないこと」を集中的に覚える</p>
   </header>
 
@@ -163,7 +171,6 @@ footer a{color:inherit}
   <section id="view-home" class="home">
     <div class="homebar">
       <div class="stats" id="home-stats"></div>
-      <button class="chip" id="snd" aria-pressed="true">効果音 ON</button>
     </div>
     <div id="home-body"></div>
   </section>
@@ -415,7 +422,7 @@ const store={get(k,f){try{const v=localStorage.getItem(k);return v?JSON.parse(v)
 const mkey=(m,id)=>m+":"+id;
 const ymd=d=>d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");
 const today=()=>ymd(new Date());
-function blankRec(){return {app:"tohankinki-drill",v:1,miss:[],hist:{},days:{},total:{n:0,c:0},sound:true}}
+function blankRec(){return {app:"tohankinki-drill",v:1,miss:[],hist:{},days:{},total:{n:0,c:0},sound:true,bgm:true}}
 function normRec(r){
   const b=blankRec();
   if(!r||typeof r!=="object")return b;
@@ -424,7 +431,7 @@ function normRec(r){
     hist:r.hist&&typeof r.hist==="object"?r.hist:{},
     days:r.days&&typeof r.days==="object"?r.days:{},
     total:r.total&&typeof r.total.n==="number"?{n:r.total.n,c:r.total.c||0}:{n:0,c:0},
-    sound:r.sound!==false};
+    sound:r.sound!==false,bgm:r.bgm!==false};
 }
 let REC=store.get("shiteha-record",null);
 if(!REC){REC=blankRec();const old=store.get("shiteha-miss",[]);if(Array.isArray(old))REC.miss=old;}
@@ -442,7 +449,7 @@ function unlockAudio(){
     const b=AC.createBuffer(1,1,22050),s=AC.createBufferSource();s.buffer=b;s.connect(AC.destination);s.start(0);
   }catch(e){}
 }
-["pointerdown","touchend","keydown"].forEach(ev=>document.addEventListener(ev,()=>{if(REC.sound)unlockAudio();},{capture:true,passive:true}));
+["pointerdown","touchend","keydown"].forEach(ev=>document.addEventListener(ev,()=>{if(REC.sound||REC.bgm)unlockAudio();if(REC.bgm&&!BGM.timer&&!document.hidden)bgmStart();},{capture:true,passive:true}));
 function tone(f,t,dur,type,vol,hold){
   const o=AC.createOscillator(),g=AC.createGain();
   o.type=type;o.frequency.setValueAtTime(f,t);
@@ -461,7 +468,56 @@ function sfx(ok){
     else{tone(150,t,0.2,"square",0.1,true);tone(150,t+0.27,0.42,"square",0.1,true);}                          // ブッブー
   }catch(e){}
 }
-function syncSoundBtn(){const sb=document.getElementById("snd");sb.textContent="効果音 "+(REC.sound?"ON":"OFF");sb.setAttribute("aria-pressed",REC.sound);}
+// ---------- BGM: original 8-bar loop, generated live (C - Am - F - G) ----------
+const BGM={timer:null,next:0,step:0,gain:null,noise:null};
+const BPM=116,STEP=60/BPM/2;               // eighth notes
+const CHORDS=[[60,64,67],[57,60,64],[53,57,60],[55,59,62]],BASS=[48,45,41,43];
+const MEL=[
+  76,0,79,0,84,79,76,0,  76,0,72,74,76,0,74,72,  72,0,77,76,74,0,72,0,  74,0,79,0,77,76,74,71,
+  79,0,76,0,72,76,79,0,  81,0,79,76,72,0,76,0,   77,76,74,72,74,0,77,0, 79,0,74,0,71,74,72,0];
+const hz=m=>440*Math.pow(2,(m-69)/12);
+function bnote(m,t,dur,type,vol){
+  const o=AC.createOscillator(),g=AC.createGain();
+  o.type=type;o.frequency.setValueAtTime(hz(m),t);
+  g.gain.setValueAtTime(0.0001,t);g.gain.exponentialRampToValueAtTime(vol,t+0.012);g.gain.exponentialRampToValueAtTime(0.0001,t+dur);
+  o.connect(g).connect(BGM.gain);o.start(t);o.stop(t+dur+0.03);
+}
+function hat(t){
+  if(!BGM.noise){const len=AC.sampleRate*0.05,b=AC.createBuffer(1,len,AC.sampleRate),c=b.getChannelData(0);for(let i=0;i<len;i++)c[i]=Math.random()*2-1;BGM.noise=b;}
+  const s=AC.createBufferSource(),f=AC.createBiquadFilter(),g=AC.createGain();
+  s.buffer=BGM.noise;f.type="highpass";f.frequency.value=7000;
+  g.gain.setValueAtTime(0.18,t);g.gain.exponentialRampToValueAtTime(0.0001,t+0.04);
+  s.connect(f).connect(g).connect(BGM.gain);s.start(t);s.stop(t+0.05);
+}
+function bgmStep(i,t){
+  const bar=Math.floor(i/8)%4,pos=i%8,ch=CHORDS[bar];
+  if(pos===0||pos===4)bnote(BASS[bar],t,STEP*3.2,"triangle",0.5);
+  if(pos===6)bnote(BASS[bar]+7,t,STEP*1.6,"triangle",0.35);
+  bnote(ch[[0,1,2,1][pos%4]]+12,t,STEP*0.9,"square",0.045);
+  const m=MEL[i%MEL.length];if(m)bnote(m,t,STEP*1.7,"triangle",0.28);
+  if(pos%2===1)hat(t);
+}
+function bgmStart(){
+  try{
+    if(!AC)unlockAudio();if(!AC||BGM.timer)return;
+    if(!BGM.gain){BGM.gain=AC.createGain();BGM.gain.connect(AC.destination);}
+    BGM.gain.gain.cancelScheduledValues(AC.currentTime);
+    BGM.gain.gain.setValueAtTime(0.0001,AC.currentTime);BGM.gain.gain.exponentialRampToValueAtTime(0.16,AC.currentTime+0.6);
+    BGM.next=AC.currentTime+0.08;
+    BGM.timer=setInterval(()=>{
+      if(!AC)return;
+      while(BGM.next<AC.currentTime+0.15){bgmStep(BGM.step++,BGM.next);BGM.next+=STEP;}
+    },30);
+  }catch(e){}
+}
+function bgmStop(){
+  if(BGM.timer){clearInterval(BGM.timer);BGM.timer=null;}
+  try{if(AC&&BGM.gain){BGM.gain.gain.cancelScheduledValues(AC.currentTime);BGM.gain.gain.setValueAtTime(BGM.gain.gain.value,AC.currentTime);BGM.gain.gain.linearRampToValueAtTime(0.0001,AC.currentTime+0.15);}}catch(e){}
+}
+document.addEventListener("visibilitychange",()=>{if(document.hidden)bgmStop();else if(REC.bgm&&AC)bgmStart();});
+document.getElementById("bgm").addEventListener("click",()=>{REC.bgm=!REC.bgm;save();syncSoundBtn();if(REC.bgm){unlockAudio();bgmStart();}else bgmStop();});
+function syncSoundBtn(){
+  const bb=document.getElementById("bgm");bb.textContent="♪ BGM "+(REC.bgm?"ON":"OFF");bb.setAttribute("aria-pressed",REC.bgm);const sb=document.getElementById("snd");sb.textContent="効果音 "+(REC.sound?"ON":"OFF");sb.setAttribute("aria-pressed",REC.sound);}
 document.getElementById("snd").addEventListener("click",()=>{REC.sound=!REC.sound;save();syncSoundBtn();if(REC.sound)sfx(true);});
 
 // ---------- structure: 3 big categories (modes) x 12 units ----------
@@ -741,7 +797,7 @@ let resetArmed=false;
 document.getElementById("reset").addEventListener("click",ev=>{
   const b=ev.currentTarget;
   if(!resetArmed){resetArmed=true;b.classList.add("go");b.textContent="本当に消す（もう一度押す）";setTimeout(()=>{resetArmed=false;b.classList.remove("go");b.textContent="記録をリセット";},4000);return;}
-  const snd=REC.sound;REC=blankRec();REC.sound=snd;miss=new Set();save();
+  const snd=REC.sound,bg=REC.bgm;REC=blankRec();REC.sound=snd;REC.bgm=bg;miss=new Set();save();
   resetArmed=false;b.classList.remove("go");b.textContent="記録をリセット";
   renderRec();recmsg("記録をリセットしました");
 });
