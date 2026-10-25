@@ -81,6 +81,34 @@ h1{font-family:var(--display);font-weight:900;font-size:clamp(1.5rem,5vw,2rem);l
 .li .r{color:var(--muted);font-size:.85rem}
 .li .t::before{content:"⊘ ";color:var(--stop)}
 .tag{display:inline-block;font-size:.7rem;background:var(--chip);border-radius:3px;padding:0 6px;margin-left:6px;color:var(--muted);font-weight:400}
+.rec{display:flex;flex-direction:column;gap:18px}
+.rec h2{font:700 1.05rem var(--display);margin:0 0 8px;padding-bottom:4px;border-bottom:2px solid var(--stop)}
+.kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
+@media (max-width:480px){.kpis{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.kpi{background:var(--sheet);border:1px solid var(--rule);border-radius:4px;padding:10px 12px;display:flex;flex-direction:column;gap:2px}
+.kpi span{font-size:.75rem;color:var(--muted);font-weight:700}
+.kpi b{font:900 1.4rem var(--display);font-variant-numeric:tabular-nums}
+.bars{display:grid;grid-template-columns:repeat(14,minmax(0,1fr));gap:4px;align-items:end;height:120px;border-bottom:1px solid var(--rule)}
+.bar{display:flex;flex-direction:column-reverse;height:100%;justify-content:flex-start}
+.bar i{display:block;width:100%}
+.bar .bc{background:var(--ok)}
+.bar .bw{background:var(--stop);opacity:.75}
+.barlbl{display:grid;grid-template-columns:repeat(14,minmax(0,1fr));gap:4px;font-size:.65rem;color:var(--muted);text-align:center;font-variant-numeric:tabular-nums}
+.legend{font-size:.75rem;color:var(--muted);display:flex;gap:12px}
+.legend i{display:inline-block;width:10px;height:10px;margin-right:4px;vertical-align:-1px}
+.secrow{display:grid;grid-template-columns:9em 1fr 5.5em;gap:8px;align-items:center;font-size:.85rem;padding:4px 0}
+.meter{height:8px;background:var(--chip);border-radius:4px;overflow:hidden}
+.meter i{display:block;height:100%;background:var(--ok)}
+.secrow .num{text-align:right;font-variant-numeric:tabular-nums;color:var(--muted)}
+.weakli{padding:8px 0;border-bottom:1px solid var(--rule);font-size:.85rem;display:flex;flex-direction:column;gap:2px}
+.weakli .m{font-size:.7rem;color:var(--muted)}
+.weakli .x{color:var(--stop);font-weight:700;font-variant-numeric:tabular-nums}
+.btnrow{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.btn{font:700 .85rem var(--display);background:var(--sheet);color:var(--ink);border:1px solid var(--ink);border-radius:4px;padding:8px 14px;cursor:pointer}
+.btn.danger{border-color:var(--stop);color:var(--stop)}
+.btn.danger.go{background:var(--stop);color:var(--sheet)}
+.note{font-size:.8rem;color:var(--muted);margin:0}
+.msg{font-size:.85rem;font-weight:700}
 footer{font-size:.75rem;color:var(--muted);border-top:1px solid var(--rule);padding-top:12px}
 footer a{color:inherit}
 @media (prefers-reduced-motion:no-preference){.opt{transition:background .15s,border-color .15s}}
@@ -96,19 +124,35 @@ footer a{color:inherit}
   <div class="tabs" role="tablist">
     <button class="tab" role="tab" id="tab-quiz" aria-selected="true">クイズ</button>
     <button class="tab" role="tab" id="tab-list" aria-selected="false">一覧</button>
+    <button class="tab" role="tab" id="tab-rec" aria-selected="false">記録</button>
   </div>
 
   <section id="view-quiz" class="controls" aria-labelledby="tab-quiz">
     <div class="row" id="modes"><span class="lbl">出題形式</span></div>
     <div class="row" id="secs"><span class="lbl">範囲</span></div>
-    <div class="row"><span class="lbl">復習</span><button class="chip weak" id="weak" aria-pressed="false">間違えた問題だけ（0）</button></div>
-    <div class="stats"><span>回答 <b id="st-n">0</b></span><span>正解 <b id="st-c">0</b></span><span>正答率 <b id="st-p">–</b></span></div>
+    <div class="row"><span class="lbl">復習・設定</span><button class="chip weak" id="weak" aria-pressed="false">間違えた問題だけ（0）</button><button class="chip" id="snd" aria-pressed="true">効果音 ON</button></div>
+    <div class="stats"><span>今回 <b id="st-c">0</b>/<b id="st-n">0</b>（<b id="st-p">–</b>）</span><span>今日 <b id="st-today">0</b>問</span><span>累計 <b id="st-total">0</b>問</span></div>
     <div id="quiz"></div>
   </section>
 
   <section id="view-list" hidden aria-labelledby="tab-list">
     <input class="search" id="q" type="search" placeholder="成分名・条件・理由で絞り込み（例：プソイドエフェドリン、授乳）">
     <div id="list"></div>
+  </section>
+
+  <section id="view-rec" class="rec" hidden aria-labelledby="tab-rec">
+    <div id="rec-body"></div>
+    <div>
+      <h2>記録のバックアップ</h2>
+      <p class="note">記録はこの端末のこのブラウザの中に保存されています。ブラウザの履歴・サイトデータを消すと消えます。別の端末に移すときや念のための保存には、書き出したファイルを読み込んでください（読み込むと今の記録と置き換わります）。</p>
+      <div class="btnrow" style="margin-top:10px">
+        <button class="btn" id="exp">記録を書き出す</button>
+        <button class="btn" id="imp">記録を読み込む</button>
+        <input type="file" id="impfile" accept="application/json,.json" hidden>
+        <button class="btn danger" id="reset">記録をリセット</button>
+        <span class="msg" id="recmsg" role="status"></span>
+      </div>
+    </div>
   </section>
 
   <footer>出典：厚生労働省「<a href="https://www.mhlw.go.jp/content/001692424.pdf" target="_blank" rel="noopener">試験問題の作成に関する手引き（令和8年4月一部改訂）</a>」第5章 別表5-1（p.401–406）。各問の解説に掲載ページを表示しています。理由の文言は手引きの記載どおりです。</footer>
@@ -300,8 +344,46 @@ const MODES={
 };
 const S={mode:"cond",secs:new Set(Object.keys(SECS)),weak:false,n:0,c:0,queue:[],cur:null,opts:[],done:false};
 const store={get(k,f){try{const v=localStorage.getItem(k);return v?JSON.parse(v):f}catch(e){return f}},set(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}};
-let miss=new Set(store.get("shiteha-miss",[]));
 const mkey=(m,id)=>m+":"+id;
+const ymd=d=>d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");
+const today=()=>ymd(new Date());
+function blankRec(){return {app:"tohankinki-drill",v:1,miss:[],hist:{},days:{},total:{n:0,c:0},sound:true}}
+function normRec(r){
+  const b=blankRec();
+  if(!r||typeof r!=="object")return b;
+  return {app:b.app,v:1,
+    miss:Array.isArray(r.miss)?r.miss.filter(x=>typeof x==="string"):[],
+    hist:r.hist&&typeof r.hist==="object"?r.hist:{},
+    days:r.days&&typeof r.days==="object"?r.days:{},
+    total:r.total&&typeof r.total.n==="number"?{n:r.total.n,c:r.total.c||0}:{n:0,c:0},
+    sound:r.sound!==false};
+}
+let REC=store.get("shiteha-record",null);
+if(!REC){REC=blankRec();const old=store.get("shiteha-miss",[]);if(Array.isArray(old))REC.miss=old;}
+REC=normRec(REC);
+let miss=new Set(REC.miss);
+function save(){REC.miss=[...miss];store.set("shiteha-record",REC);}
+
+// ---------- sound (Web Audio, no files) ----------
+let AC=null;
+function tone(f,t,dur,type,vol,hold){
+  const o=AC.createOscillator(),g=AC.createGain();
+  o.type=type;o.frequency.setValueAtTime(f,t);
+  g.gain.setValueAtTime(0.0001,t);g.gain.exponentialRampToValueAtTime(vol,t+0.01);
+  if(hold){g.gain.setValueAtTime(vol,t+dur-0.04);g.gain.linearRampToValueAtTime(0.0001,t+dur);}
+  else g.gain.exponentialRampToValueAtTime(0.0001,t+dur);
+  o.connect(g).connect(AC.destination);o.start(t);o.stop(t+dur+0.05);
+}
+function sfx(ok){
+  if(!REC.sound)return;
+  try{
+    AC=AC||new (window.AudioContext||window.webkitAudioContext)();
+    if(AC.state==="suspended")AC.resume();
+    const t=AC.currentTime+0.02;
+    if(ok){tone(988,t,0.14,"sine",0.3);tone(1319,t+0.12,0.5,"sine",0.3);tone(2638,t+0.12,0.3,"sine",0.05);}   // ピローン
+    else{tone(150,t,0.2,"square",0.1,true);tone(150,t+0.27,0.42,"square",0.1,true);}                          // ブッブー
+  }catch(e){}
+}
 
 function eligible(){
   return D.filter(d=>S.secs.has(d.sec)&&MODES[S.mode].ok(d)&&(!S.weak||miss.has(mkey(S.mode,d.id))));
@@ -368,8 +450,12 @@ function answer(i){
   if(S.done||!S.cur)return;
   S.picked=S.opts[i];S.done=true;S.n++;
   const k=mkey(S.mode,S.cur.id);
-  if(S.picked===S.correct){S.c++;if(S.weak)miss.delete(k);}else miss.add(k);
-  store.set("shiteha-miss",[...miss]);
+  const ok=S.picked===S.correct;
+  if(ok){S.c++;if(S.weak)miss.delete(k);}else miss.add(k);
+  const h=REC.hist[k]||(REC.hist[k]={n:0,c:0,last:""});h.n++;if(ok)h.c++;h.last=today();
+  const dy=REC.days[today()]||(REC.days[today()]={n:0,c:0});dy.n++;if(ok)dy.c++;
+  REC.total.n++;if(ok)REC.total.c++;
+  save();sfx(ok);
   stats();render();
 }
 function stats(){
@@ -379,7 +465,12 @@ function stats(){
   const w=document.getElementById("weak");
   w.textContent="間違えた問題だけ（"+[...miss].filter(k=>k.startsWith(S.mode+":")).length+"）";
   w.setAttribute("aria-pressed",S.weak);
+  document.getElementById("st-today").textContent=(REC.days[today()]||{n:0}).n;
+  document.getElementById("st-total").textContent=REC.total.n;
+  const sb=document.getElementById("snd");
+  sb.textContent="効果音 "+(REC.sound?"ON":"OFF");sb.setAttribute("aria-pressed",REC.sound);
 }
+document.getElementById("snd").addEventListener("click",()=>{REC.sound=!REC.sound;save();stats();if(REC.sound)sfx(true);});
 document.addEventListener("keydown",e=>{
   if(document.getElementById("view-quiz").hidden||e.target.tagName==="INPUT")return;
   if(!S.done&&/^[1-4]$/.test(e.key)&&S.opts[+e.key-1]){answer(+e.key-1);}
@@ -406,13 +497,73 @@ document.getElementById("weak").addEventListener("click",()=>{S.weak=!S.weak;S.q
 
 // tabs
 function tab(which){
-  document.getElementById("tab-quiz").setAttribute("aria-selected",which==="quiz");
-  document.getElementById("tab-list").setAttribute("aria-selected",which==="list");
-  document.getElementById("view-quiz").hidden=which!=="quiz";
-  document.getElementById("view-list").hidden=which!=="list";
+  ["quiz","list","rec"].forEach(t=>{
+    document.getElementById("tab-"+t).setAttribute("aria-selected",which===t);
+    document.getElementById("view-"+t).hidden=which!==t;
+  });
+  if(which==="rec")renderRec();
 }
-document.getElementById("tab-quiz").addEventListener("click",()=>tab("quiz"));
-document.getElementById("tab-list").addEventListener("click",()=>tab("list"));
+["quiz","list","rec"].forEach(t=>document.getElementById("tab-"+t).addEventListener("click",()=>tab(t)));
+
+// record view
+const MODE_SHORT={cond:"誰に・どんな時",target:"どの成分",reason:"なぜ"};
+function renderRec(){
+  const T=REC.total,days=Object.keys(REC.days).filter(k=>REC.days[k].n>0);
+  const td=REC.days[today()]||{n:0,c:0};
+  const pct=(c,n)=>n?Math.round(c/n*100)+"%":"–";
+  let h='<div><h2>これまでの記録</h2><div class="kpis">'+
+    '<div class="kpi"><span>累計回答</span><b>'+T.n+'</b></div>'+
+    '<div class="kpi"><span>累計正答率</span><b>'+pct(T.c,T.n)+'</b></div>'+
+    '<div class="kpi"><span>今日</span><b>'+td.n+'</b></div>'+
+    '<div class="kpi"><span>学習日数</span><b>'+days.length+'</b></div></div></div>';
+  // last 14 days
+  const list=[];for(let i=13;i>=0;i--){const d=new Date();d.setDate(d.getDate()-i);const k=ymd(d);list.push([d,REC.days[k]||{n:0,c:0}]);}
+  const max=Math.max(10,...list.map(x=>x[1].n));
+  h+='<div><h2>直近14日</h2><div class="bars">'+list.map(([d,v])=>'<div class="bar" title="'+(d.getMonth()+1)+'/'+d.getDate()+'：'+v.n+'問中'+v.c+'問正解"><i class="bc" style="height:'+(v.c/max*100)+'%"></i><i class="bw" style="height:'+((v.n-v.c)/max*100)+'%"></i></div>').join("")+
+    '</div><div class="barlbl">'+list.map(([d])=>'<span>'+d.getDate()+'</span>').join("")+'</div>'+
+    '<div class="legend"><span><i style="background:var(--ok)"></i>正解</span><span><i style="background:var(--stop);opacity:.75"></i>不正解</span><span>縦軸の上限 '+max+'問</span></div></div>';
+  // per section
+  const agg={};Object.keys(SECS).forEach(k=>agg[k]={n:0,c:0});
+  Object.entries(REC.hist).forEach(([k,v])=>{const d=D[+k.split(":")[1]];if(d&&agg[d.sec]){agg[d.sec].n+=v.n;agg[d.sec].c+=v.c;}});
+  h+='<div><h2>分野別の正答率</h2>'+Object.entries(SECS).map(([k,l])=>{const a=agg[k];return '<div class="secrow"><span>'+l+'</span><span class="meter"><i style="width:'+(a.n?a.c/a.n*100:0)+'%"></i></span><span class="num">'+(a.n?pct(a.c,a.n)+'・'+a.n+'問':'未回答')+'</span></div>'}).join("")+'</div>';
+  // weakest
+  const weak=Object.entries(REC.hist).filter(([k,v])=>v.n-v.c>0&&D[+k.split(":")[1]])
+    .sort((a,b)=>((b[1].n-b[1].c)/b[1].n-(a[1].n-a[1].c)/a[1].n)||((b[1].n-b[1].c)-(a[1].n-a[1].c))).slice(0,10);
+  h+='<div><h2>苦手な問題 トップ10</h2>'+(weak.length?weak.map(([k,v])=>{const [m,id]=k.split(":");const d=D[+id];
+    return '<div class="weakli"><span class="m">'+(MODE_SHORT[m]||m)+'｜'+SECS[d.sec]+'</span><span>'+esc(d.cond)+' ⇔ '+esc(d.target)+'</span><span class="x">'+v.n+'回中'+(v.n-v.c)+'回ミス（最終 '+(v.last||"–")+'）</span></div>'}).join("")
+    :'<p class="note">まだ間違えた問題はありません。</p>')+'</div>';
+  document.getElementById("rec-body").innerHTML=h;
+}
+const recmsg=t=>{document.getElementById("recmsg").textContent=t;};
+document.getElementById("exp").addEventListener("click",()=>{
+  try{
+    save();
+    const blob=new Blob([JSON.stringify(REC,null,1)],{type:"application/json"});
+    const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="tohankinki-record-"+today()+".json";
+    document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),2000);
+    recmsg("書き出しました");
+  }catch(e){recmsg("書き出せませんでした");}
+});
+document.getElementById("imp").addEventListener("click",()=>document.getElementById("impfile").click());
+document.getElementById("impfile").addEventListener("change",e=>{
+  const f=e.target.files[0];if(!f)return;
+  const r=new FileReader();
+  r.onload=()=>{
+    try{const j=JSON.parse(r.result);if(!j||j.app!=="tohankinki-drill")throw 0;
+      REC=normRec(j);miss=new Set(REC.miss);save();stats();renderRec();S.queue=[];next();recmsg("読み込みました（"+REC.total.n+"問分）");}
+    catch(err){recmsg("このファイルは読み込めません。書き出した .json を選んでください");}
+    e.target.value="";
+  };
+  r.readAsText(f);
+});
+let resetArmed=false;
+document.getElementById("reset").addEventListener("click",ev=>{
+  const b=ev.currentTarget;
+  if(!resetArmed){resetArmed=true;b.classList.add("go");b.textContent="本当に消す（もう一度押す）";setTimeout(()=>{resetArmed=false;b.classList.remove("go");b.textContent="記録をリセット";},4000);return;}
+  const snd=REC.sound;REC=blankRec();REC.sound=snd;miss=new Set();save();
+  resetArmed=false;b.classList.remove("go");b.textContent="記録をリセット";
+  S.n=0;S.c=0;stats();renderRec();recmsg("記録をリセットしました");
+});
 
 // list
 function renderList(){
