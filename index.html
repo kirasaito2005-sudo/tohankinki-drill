@@ -1,0 +1,440 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>してはいけないことドリル</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=BIZ+UDPGothic:wght@400;700&family=Zen+Kaku+Gothic+Antique:wght@500;700;900&display=swap">
+<style>
+/* Layout: one narrow column like a package insert; the question card is the 添付文書「してはいけないこと」box */
+:root{
+  --paper:#f5f7f6; --sheet:#ffffff; --ink:#1d2a2f; --muted:#5d6b70; --rule:#cfd8d6;
+  --stop:#b3261e; --stop-soft:#fbeceb; --ok:#1f6f4a; --ok-soft:#e6f3ec; --chip:#e8eeec;
+  --display:"Zen Kaku Gothic Antique","Hiragino Sans","Yu Gothic",sans-serif;
+  --body:"BIZ UDPGothic","Hiragino Sans","Yu Gothic","Meiryo",sans-serif;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --paper:#141a1c; --sheet:#1c2427; --ink:#e4ebe9; --muted:#9aa8a6; --rule:#33403f;
+  --stop:#ff8a80; --stop-soft:#3a2120; --ok:#7fd4a6; --ok-soft:#1d3329; --chip:#26302f; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --paper:#141a1c; --sheet:#1c2427; --ink:#e4ebe9; --muted:#9aa8a6; --rule:#33403f;
+  --stop:#ff8a80; --stop-soft:#3a2120; --ok:#7fd4a6; --ok-soft:#1d3329; --chip:#26302f; color-scheme:dark}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0}
+[hidden]{display:none!important}
+body{background:var(--paper);color:var(--ink);font-family:var(--body);font-size:15px;line-height:1.7;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:20px 48px}
+.wrap{max-width:720px;margin:0 auto;display:flex;flex-direction:column;gap:18px}
+header{display:flex;flex-direction:column;gap:4px}
+h1{font-family:var(--display);font-weight:900;font-size:clamp(1.5rem,5vw,2rem);line-height:1.25;margin:0;text-wrap:balance;display:flex;align-items:center;gap:.5em}
+.mark{flex:none;width:1.1em;height:1.1em;border:3px solid var(--stop);border-radius:50%;position:relative}
+.mark::after{content:"";position:absolute;left:50%;top:-8%;width:3px;height:116%;background:var(--stop);transform:translateX(-50%) rotate(45deg)}
+.sub{color:var(--muted);font-size:.85rem;margin:0}
+.tabs{display:flex;gap:6px;border-bottom:1px solid var(--rule)}
+.tab{font:700 .95rem var(--display);background:none;border:0;color:var(--muted);padding:8px 14px;border-bottom:3px solid transparent;cursor:pointer}
+.tab[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--stop)}
+.tab:focus-visible,button:focus-visible,input:focus-visible{outline:2px solid var(--stop);outline-offset:2px}
+.controls{display:flex;flex-direction:column;gap:10px}
+.row{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.lbl{font-size:.75rem;letter-spacing:.08em;color:var(--muted);width:100%;font-weight:700}
+.chip{font:inherit;font-size:.85rem;border:1px solid var(--rule);background:var(--sheet);color:var(--ink);border-radius:999px;padding:4px 12px;cursor:pointer}
+.chip[aria-pressed="true"]{background:var(--ink);color:var(--sheet);border-color:var(--ink)}
+.chip.weak[aria-pressed="true"]{background:var(--stop);border-color:var(--stop);color:var(--sheet)}
+.stats{display:flex;gap:16px;font-size:.85rem;color:var(--muted);font-variant-numeric:tabular-nums}
+.stats b{color:var(--ink)}
+.card{background:var(--sheet);border:2px solid var(--stop);border-radius:4px;overflow:hidden}
+.card-head{background:var(--stop);color:var(--sheet);font:700 .85rem var(--display);padding:6px 14px;letter-spacing:.06em;display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap}
+.card-body{padding:16px;display:flex;flex-direction:column;gap:14px}
+.q-prompt{font-size:.85rem;color:var(--muted);margin:0}
+.given{display:flex;flex-direction:column;gap:8px}
+.given dl{margin:0;display:grid;grid-template-columns:auto 1fr;gap:4px 12px}
+.given dt{font-size:.75rem;color:var(--muted);font-weight:700;padding-top:.25em;white-space:nowrap}
+.given dd{margin:0;font-weight:700;min-width:0}
+.opts{display:flex;flex-direction:column;gap:8px}
+.opt{font:inherit;text-align:left;background:var(--paper);color:var(--ink);border:1px solid var(--rule);border-radius:4px;padding:10px 12px;cursor:pointer;display:flex;gap:10px;align-items:flex-start;line-height:1.55}
+.opt .k{flex:none;font:700 .8rem var(--display);width:1.6em;height:1.6em;border-radius:50%;border:1px solid var(--rule);display:grid;place-items:center;margin-top:.05em}
+.opt:hover:not(:disabled){border-color:var(--ink)}
+.opt:disabled{cursor:default}
+.opt.right{background:var(--ok-soft);border-color:var(--ok)}
+.opt.right .k{background:var(--ok);color:var(--sheet);border-color:var(--ok)}
+.opt.wrong{background:var(--stop-soft);border-color:var(--stop)}
+.opt.wrong .k{background:var(--stop);color:var(--sheet);border-color:var(--stop)}
+.fb{border-top:1px dashed var(--rule);padding-top:12px;display:flex;flex-direction:column;gap:8px}
+.verdict{font:900 1.05rem var(--display);margin:0}
+.verdict.ok{color:var(--ok)} .verdict.ng{color:var(--stop)}
+.entry{display:grid;grid-template-columns:auto 1fr;gap:4px 12px;font-size:.9rem;margin:0}
+.entry dt{color:var(--muted);font-size:.75rem;font-weight:700;padding-top:.2em;white-space:nowrap}
+.entry dd{margin:0;min-width:0}
+.src{font-size:.75rem;color:var(--muted)}
+.next{align-self:flex-end;font:700 .95rem var(--display);background:var(--ink);color:var(--sheet);border:0;border-radius:4px;padding:10px 20px;cursor:pointer}
+.empty{padding:20px;text-align:center;color:var(--muted)}
+.search{font:inherit;width:100%;padding:8px 12px;border:1px solid var(--rule);border-radius:4px;background:var(--sheet);color:var(--ink)}
+.group{display:flex;flex-direction:column;gap:0}
+.group h2{font:700 1.05rem var(--display);margin:18px 0 6px;padding-bottom:4px;border-bottom:2px solid var(--stop)}
+.group h3{font:700 .85rem var(--display);color:var(--muted);margin:12px 0 4px;letter-spacing:.04em}
+.li{padding:10px 0;border-bottom:1px solid var(--rule);display:flex;flex-direction:column;gap:2px;font-size:.9rem}
+.li .c{font-weight:700}
+.li .s{font-size:.8rem;color:var(--muted)}
+.li .r{color:var(--muted);font-size:.85rem}
+.li .t::before{content:"⊘ ";color:var(--stop)}
+.tag{display:inline-block;font-size:.7rem;background:var(--chip);border-radius:3px;padding:0 6px;margin-left:6px;color:var(--muted);font-weight:400}
+footer{font-size:.75rem;color:var(--muted);border-top:1px solid var(--rule);padding-top:12px}
+footer a{color:inherit}
+@media (prefers-reduced-motion:no-preference){.opt{transition:background .15s,border-color .15s}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1><span class="mark" aria-hidden="true"></span>してはいけないことドリル</h1>
+    <p class="sub">登録販売者・手引き 別表5-1「してはいけないこと」を集中的に覚える</p>
+  </header>
+
+  <div class="tabs" role="tablist">
+    <button class="tab" role="tab" id="tab-quiz" aria-selected="true">クイズ</button>
+    <button class="tab" role="tab" id="tab-list" aria-selected="false">一覧</button>
+  </div>
+
+  <section id="view-quiz" class="controls" aria-labelledby="tab-quiz">
+    <div class="row" id="modes"><span class="lbl">出題形式</span></div>
+    <div class="row" id="secs"><span class="lbl">範囲</span></div>
+    <div class="row"><span class="lbl">復習</span><button class="chip weak" id="weak" aria-pressed="false">間違えた問題だけ（0）</button></div>
+    <div class="stats"><span>回答 <b id="st-n">0</b></span><span>正解 <b id="st-c">0</b></span><span>正答率 <b id="st-p">–</b></span></div>
+    <div id="quiz"></div>
+  </section>
+
+  <section id="view-list" hidden aria-labelledby="tab-list">
+    <input class="search" id="q" type="search" placeholder="成分名・条件・理由で絞り込み（例：プソイドエフェドリン、授乳）">
+    <div id="list"></div>
+  </section>
+
+  <footer>出典：厚生労働省「<a href="https://www.mhlw.go.jp/content/001692424.pdf" target="_blank" rel="noopener">試験問題の作成に関する手引き（令和8年4月一部改訂）</a>」第5章 別表5-1（p.401–406）。各問の解説に掲載ページを表示しています。理由の文言は手引きの記載どおりです。</footer>
+</div>
+
+<script>
+// ---------- data: 別表5-1「してはいけないこと」 ----------
+const SECS={use:"使用（服用）しない人",drive:"運転操作をしない",cont:"連用に関する注意",mass:"大量使用・乱用",food:"飲酒・カフェイン飲料",combo:"併用しない薬",site:"使用しない部位など"};
+const D=[];
+function R(sec,sub,cond,scope,target,reason,page){D.push({id:D.length,sec,sub,cond,scope,target,reason,page});}
+
+const ALLERGY="本剤又は本剤の成分によりアレルギー症状を起こしたことがある人";
+const ALLR="アレルギー症状の既往歴のある人が再度使用した場合、ショック（アナフィラキシー）、皮膚粘膜眼症候群（スティーブンス・ジョンソン症候群）、中毒性表皮壊死融解症（ライエル症候群）等の重篤なアレルギー性の副作用を生じる危険性が高まるため。";
+const CAFF_SLEEP="カフェイン、無水カフェイン、カフェインクエン酸塩等のカフェインを含む成分を主薬とする眠気防止薬";
+const PSE="プソイドエフェドリン塩酸塩";
+const NSAID_EXT="インドメタシン、フェルビナク、ケトプロフェン又はピロキシカムが配合された外用鎮痛消炎薬";
+const KETO_EXT="ケトプロフェンが配合された外用鎮痛消炎薬";
+const AH_SLEEP="抗ヒスタミン成分を主薬とする催眠鎮静薬（睡眠改善薬）";
+const CODEINE="コデインリン酸塩水和物、ジヒドロコデインリン酸塩";
+const ALL="（成分によらず、当該薬効群の医薬品すべてに記載）";
+const GLY="グリチルリチン酸二カリウム、グリチルレチン酸、カンゾウ等のグリチルリチン酸を含む成分（1日用量がグリチルリチン酸として40mg以上、又はカンゾウとして1g以上を含有する場合）";
+const GLYR="偽アルドステロン症を生じるおそれがあるため。";
+const LONGR="一定期間又は一定回数使用しても症状の改善がみられない場合は、ほかに原因がある可能性があるため。";
+const MIZU="みずむし・たむし用薬";
+const UONOME="うおのめ・いぼ・たこ用薬";
+const SITE="次の部位には使用しないこと：";
+
+// アレルギーの既往歴
+const sA="アレルギーの既往歴";
+["かぜ薬、解熱鎮痛薬","デキストロメトルファン臭化水素酸塩水和物、フェノールフタリン酸デキストロメトルファン","クエン酸チペピジン、チペピジンヒベンズ酸塩","アミノフィリン水和物、テオフィリン","リドカイン、リドカイン塩酸塩",
+ "クロルフェニラミンマレイン酸塩・ベラドンナ総アルカロイド・プソイドエフェドリン塩酸塩（又は硫酸塩）・カフェインを含有する鼻炎用内服薬",
+ "ヨードチンキを含有するみずむし・たむし用薬","ポビドンヨードが配合された含嗽薬、口腔咽喉薬、殺菌消毒薬","ブチルスコポラミン臭化物","ロペラミド塩酸塩","メキタジン",
+ "リドカイン、リドカイン塩酸塩、アミノ安息香酸エチル、塩酸パラブチルアミノ安息香酸ジエチルアミノエチル又はジブカイン塩酸塩が配合された外用痔疾用薬（坐薬、注入軟膏）"
+].forEach(t=>R("use",sA,ALLERGY,"",t,ALLR,401));
+R("use",sA,"喘息を起こしたことがある人","",NSAID_EXT,"喘息発作を誘発するおそれがあるため。",401);
+R("use",sA,"本剤又は他のかぜ薬、解熱鎮痛薬を使用（服用）して喘息を起こしたことがある人","","アセトアミノフェン、アスピリン、イブプロフェン、イソプロピルアンチピリン等の解熱鎮痛成分","アスピリン喘息を誘発するおそれがあるため。",401);
+R("use",sA,"次の医薬品によるアレルギー症状（発疹・発赤、かゆみ、かぶれ等）を起こしたことがある人：チアプロフェン酸を含有する解熱鎮痛薬、スプロフェンを含有する外用鎮痛消炎薬、フェノフィブラートを含有する高脂血症治療薬","",KETO_EXT,"接触皮膚炎、光線過敏症を誘発するおそれがあるため。",401);
+R("use",sA,"次の添加物によるアレルギー症状（発疹・発赤、かゆみ、かぶれ等）を起こしたことがある人：オキシベンゾン、オクトクリレンを含有する製品（日焼け止め、香水等）","",KETO_EXT,"接触皮膚炎を誘発するおそれがあるため。",402);
+R("use",sA,"本剤又は本剤の成分、牛乳によるアレルギー症状を起こしたことがある人","","タンニン酸アルブミン","タンニン酸アルブミンは、乳製カゼインを由来としているため。",402);
+R("use",sA,"本剤又は本剤の成分、牛乳によるアレルギー症状を起こしたことがある人","","カゼイン、カゼインナトリウム等（添加物）","カゼインは牛乳タンパクの主成分であり、牛乳アレルギーのアレルゲンとなる可能性があるため。",402);
+// 症状・状態
+const sB="症状・状態";
+R("use",sB,"次の症状がある人：胃酸過多","",CAFF_SLEEP,"カフェインが胃液の分泌を亢進し、症状を悪化させるおそれがあるため。",402);
+R("use",sB,"次の症状がある人：前立腺肥大による排尿困難","",PSE,"交感神経刺激作用により、尿の貯留・尿閉を生じるおそれがあるため。",402);
+R("use",sB,"次の症状がある人：激しい腹痛又は吐き気・嘔吐","","ヒマシ油が配合された瀉下薬","急性腹症（腸管の狭窄、閉塞、腹腔内器官の炎症等）の症状である可能性があるため。",402);
+const KANO="患部が化膿している人／次の部位には使用しないこと：水痘（水ぼうそう）、みずむし・たむし等又は化膿している患部";
+R("use",sB,KANO,"","ステロイド性抗炎症成分が配合された外用薬","細菌等の感染に対する抵抗力を弱めて、感染を増悪させる可能性があるため。",402);
+R("use",sB,KANO,"","インドメタシン、フェルビナク、ケトプロフェン又はピロキシカムが配合された外用薬","感染に対する効果はなく、逆に感染の悪化が自覚されにくくなるおそれがあるため。",402);
+// 基礎疾患等
+const sC="基礎疾患等";
+const HEART="徐脈又は頻脈を引き起こし、心臓病の症状を悪化させるおそれがあるため。";
+R("use",sC,"次の診断を受けた人：心臓病","",PSE,HEART,402);
+R("use",sC,"次の診断を受けた人：心臓病","","芍薬甘草湯",HEART,402);
+R("use",sC,"次の診断を受けた人：心臓病","",CAFF_SLEEP,HEART,402);
+R("use",sC,"次の診断を受けた人：胃潰瘍","",CAFF_SLEEP,"胃液の分泌が亢進し、胃潰瘍の症状を悪化させるおそれがあるため。",402);
+R("use",sC,"次の診断を受けた人：高血圧","",PSE,"交感神経興奮作用により血圧を上昇させ、高血圧を悪化させるおそれがあるため。",402);
+R("use",sC,"次の診断を受けた人：甲状腺機能障害","",PSE,"甲状腺機能亢進症の主症状は、交感神経系の緊張等によってもたらされており、交感神経系を興奮させる成分は、症状を悪化させるおそれがあるため。",402);
+R("use",sC,"次の診断を受けた人：糖尿病","",PSE,"肝臓でグリコーゲンを分解して血糖値を上昇させる作用があり、糖尿病を悪化させるおそれがあるため。",402);
+R("use",sC,"日常的に不眠の人、不眠症の診断を受けた人","",AH_SLEEP,"睡眠改善薬は、慢性的な不眠症状に用いる医薬品でないため。医療機関において不眠症の治療を受けている場合には、その治療を妨げるおそれがあるため。",402);
+// その他
+const sD="その他";
+R("use",sD,"透析療法を受けている人","","スクラルファート、水酸化アルミニウムゲル、ケイ酸アルミン酸マグネシウム、ケイ酸アルミニウム、合成ヒドロタルサイト、アルジオキサ等のアルミニウムを含む成分が配合された胃腸薬、胃腸鎮痛鎮痙薬","長期間服用した場合に、アルミニウム脳症及びアルミニウム骨症を発症したとの報告があるため。",402);
+R("use",sD,"口の中に傷やひどいただれのある人","","クロルヘキシジングルコン酸塩が配合された製剤（口腔内への適応を有する場合）","傷やただれの状態を悪化させるおそれがあるため。",402);
+// 小児
+const sE="小児における年齢制限";
+R("use",sE,"15歳未満の小児","","アスピリン、アスピリンアルミニウム、サザピリン、プロメタジンメチレンジサリチル酸塩、サリチル酸ナトリウム","外国において、ライ症候群の発症との関連性が示唆されているため。",403);
+R("use",sE,"15歳未満の小児","","プロメタジン塩酸塩等のプロメタジンを含む成分","外国において、乳児突然死症候群、乳児睡眠時無呼吸発作のような致命的な呼吸抑制が現れたとの報告があるため。",403);
+R("use",sE,"15歳未満の小児","","イブプロフェン","一般用医薬品では、小児向けの製品はないため。",403);
+R("use",sE,"15歳未満の小児","",AH_SLEEP,"小児では、神経過敏、興奮を起こすおそれが大きいため。",403);
+R("use",sE,"15歳未満の小児","","オキセサゼイン","一般用医薬品では、小児向けの製品はないため。",403);
+R("use",sE,"15歳未満の小児","","ロペラミド","外国で乳幼児が過量摂取した場合に、中枢神経系障害、呼吸抑制、腸管壊死に至る麻痺性イレウスを起こしたとの報告があるため。",403);
+R("use",sE,"12歳未満の小児","",CODEINE,"重篤な呼吸抑制があらわれるおそれがあるため。",403);
+R("use",sE,"6歳未満の小児","","アミノ安息香酸エチル","メトヘモグロビン血症を起こすおそれがあるため。",403);
+R("use",sE,"3歳未満の小児","","ヒマシ油類","",403);
+// 妊婦・授乳婦等
+const sF="妊婦、授乳婦等";
+const PREG="妊婦又は妊娠していると思われる人";
+R("use",sF,PREG,"","ヒマシ油類","腸の急激な動きに刺激されて流産・早産を誘発するおそれがあるため。",403);
+R("use",sF,PREG,"","ジフェンヒドラミン塩酸塩を主薬とする催眠鎮静薬（睡眠改善薬）","妊娠に伴う不眠は、睡眠改善薬の適用症状でないため。",403);
+R("use",sF,PREG,"","エチニルエストラジオール、エストラジオール","妊娠中の女性ホルモン成分の摂取によって、胎児の先天性異常の発生が報告されているため。",403);
+R("use",sF,PREG,"","オキセサゼイン","妊娠中における安全性は確立されていないため。",403);
+R("use",sF,"出産予定日12週以内の妊婦","","アスピリン、アスピリンアルミニウム、イブプロフェン","妊娠期間の延長、胎児の動脈管の収縮・早期閉鎖、子宮収縮の抑制、分娩時出血の増加のおそれがあるため。",403);
+const NURSE="授乳中の人は本剤を服用しないか、本剤を服用する場合は授乳を避けること";
+R("use",sF,NURSE,"","ジフェンヒドラミン塩酸塩、ジフェンヒドラミンサリチル酸塩等のジフェンヒドラミンを含む成分が配合された内服薬、点鼻薬、坐薬、注入軟膏","乳児に昏睡を起こすおそれがあるため。",403);
+R("use",sF,NURSE,"","アミノフィリン水和物、テオフィリンが配合された鎮咳去痰薬、鎮暈薬","乳児に神経過敏を起こすことがあるため。",403);
+R("use",sF,NURSE,"","ロートエキスが配合された内服薬、外用痔疾用薬（坐薬、注入軟膏）","乳児に頻脈を起こすおそれがあるため。（なお、授乳婦の乳汁分泌が抑制されることがある。）",403);
+R("use",sF,NURSE,"","センノシド、センナ、ダイオウ又はカサントラノールが配合された内服薬、ヒマシ油類","乳児に下痢を起こすおそれがあるため。",403);
+R("use",sF,NURSE,"",CODEINE,"コデインで、母乳への移行により、乳児でモルヒネ中毒が生じたとの報告があるため。",403);
+
+// 運転
+const DRV="服用後、乗物又は機械類の運転操作をしないこと";
+R("drive","",DRV,"かぜ薬、催眠鎮静薬、乗物酔い防止薬、鎮咳去痰薬、口腔咽喉薬、鼻炎用内服薬、アレルギー用薬、内服痔疾用薬","ジフェンヒドラミン塩酸塩、クロルフェニラミンマレイン酸塩等の抗ヒスタミン成分","眠気等",403);
+R("drive","",DRV,"かぜ薬、鎮咳去痰薬","コデインリン酸塩水和物、ジヒドロコデインリン酸塩、デキストロメトルファン臭化水素酸塩水和物、フェノールフタリン酸デキストロメトルファン（※フェノールフタリン酸デキストロメトルファンは鎮咳去痰薬のみ）","眠気等",404);
+R("drive","",DRV,"解熱鎮痛薬、催眠鎮静薬","ブロモバレリル尿素、アリルイソプロピルアセチル尿素","眠気等",404);
+R("drive","",DRV,"止瀉薬","ロペラミド塩酸塩、ロートエキス","眠気等",404);
+R("drive","",DRV,"胃腸鎮痛鎮痙薬、乗物酔い防止薬","スコポラミン臭化水素酸塩水和物、メチルオクタトロピン臭化物","眠気、目のかすみ、異常なまぶしさ",404);
+R("drive","",DRV,"胃腸薬","ピレンゼピン塩酸塩水和物","目のかすみ、異常なまぶしさ",404);
+R("drive","",DRV,"かぜ薬、胃腸鎮痛鎮痙薬、鼻炎用内服薬、乗物酔い防止薬","スコポラミン臭化水素酸塩水和物、メチルオクタトロピン臭化物以外の抗コリン成分","目のかすみ、異常なまぶしさ",404);
+
+// 連用
+R("cont","","長期連用しないこと","かぜ薬、解熱鎮痛薬、抗菌性点眼薬、鼻炎用内服薬、鎮静薬、アレルギー用薬",ALL,LONGR,404);
+R("cont","","長期連用しないこと","外用鎮痛消炎薬","インドメタシン、フェルビナク、ケトプロフェン、ピロキシカム",LONGR,404);
+R("cont","","連用しないこと","瀉下薬","ヒマシ油",LONGR,404);
+R("cont","","長期連用しないこと","鼻炎用点鼻薬",ALL,"二次充血、鼻づまり等を生じるおそれがある。",404);
+R("cont","","短期間の服用にとどめ、連用しないこと","眠気防止薬","カフェイン、無水カフェイン、カフェインクエン酸塩等のカフェインを含む成分","眠気防止薬は、一時的に緊張を要する場合に居眠りを防止する目的で使用されるものであり、連用によって睡眠が不要になるというものではなく、短期間の使用にとどめ、適切な睡眠を摂る必要があるため。",404);
+R("cont","","短期間の服用にとどめ、連用しないこと","短期間の服用に限られる漢方生薬製剤",GLY,GLYR,404);
+R("cont","","長期連用しないこと","外用痔疾用薬（坐薬、注入軟膏）",GLY,GLYR,404);
+R("cont","","長期連用しないこと","漢方生薬製剤以外の鎮咳去痰薬、瀉下剤、婦人薬",GLY,GLYR,404);
+R("cont","","長期連用しないこと","胃腸薬、胃腸鎮痛鎮痙薬",GLY,GLYR,404);
+R("cont","","長期連用しないこと","胃腸薬、胃腸鎮痛鎮痙薬","スクラルファート、水酸化アルミニウムゲル、ケイ酸アルミン酸マグネシウム、ケイ酸アルミニウム、合成ヒドロタルサイト、アルジオキサ等のアルミニウムを含む成分","長期連用により、アルミニウム脳症及びアルミニウム骨症を生じるおそれがあるため。",404);
+R("cont","","長期連用しないこと","外用痔疾用薬、化膿性皮膚疾患用薬、鎮痒消炎薬、しもやけ・あかぎれ用薬","ステロイド性抗炎症成分（コルチゾン換算で1g又は1mLあたり0.025mg以上を含有する場合。ただし、坐薬及び注入軟膏では、含量によらず記載）","副腎皮質の機能低下を生じるおそれがあるため。",404);
+R("cont","","症状があるときのみの服用にとどめ、連用しないこと","漢方製剤","芍薬甘草湯","うっ血性心不全、心室頻拍の副作用が現れることがあるため。",404);
+R("cont","","1週間以上継続して服用しないこと","止瀉薬","次没食子酸ビスマス、次硝酸ビスマス等のビスマスを含む成分","海外において、長期連用した場合に精神神経症状が現れたとの報告があるため。",405);
+R("cont","","連用しないこと","浣腸薬",ALL,"感受性の低下（いわゆる“慣れ”）が生じて、習慣的に使用される傾向があるため。",405);
+R("cont","","○○以上続けて服用しないこと（承認内容により、回数又は日数を記載）","駆虫薬",ALL,"過度に服用しても効果が高まることはなく、かえって副作用を生じるおそれがあるため。虫卵には駆虫作用が及ばず、成虫になるのを待つため、1ヶ月以上の間隔を置く必要があるため。",405);
+
+// 大量・乱用
+R("mass","","大量に使用（服用）しないこと","","センナ、センノシド、ダイオウ、カサントラノール、ビサコジル、ピコスルファートナトリウム等の刺激性瀉下成分が配合された瀉下剤","腸管粘膜への刺激が大きくなり、腸管粘膜に炎症を生じるおそれがあるため。",405);
+R("mass","","過量服用しないこと","","指定濫用防止医薬品","乱用のおそれがあるため。",405);
+R("mass","","過量服用・長期連用しないこと","","コデインリン酸塩水和物、ジヒドロコデインリン酸塩が配合された鎮咳去痰薬（内服液剤）","倦怠感や虚脱感等が現れることがあるため。依存性・習慣性がある成分が配合されており、乱用事例が報告されているため。",405);
+
+// 食品
+const ALC="服用前後は飲酒しないこと";
+R("food","",ALC,"","かぜ薬、解熱鎮痛薬","肝機能障害、胃腸障害が生じるおそれがあるため。",405);
+R("food","",ALC,"","次硝酸ビスマス、次没食子酸ビスマス等のビスマスを含む成分","吸収増大による精神神経系障害が生じるおそれがあるため。",405);
+R("food","",ALC,"","ブロモバレリル尿素又はアリルイソプロピルアセチル尿素が配合された解熱鎮痛薬、催眠鎮静薬、乗物酔い防止薬","鎮静作用の増強が生じるおそれがあるため。",405);
+R("food","",ALC,"","抗ヒスタミン成分を主薬とする催眠鎮静薬","鎮静作用の増強が生じるおそれがあるため。",405);
+R("food","","コーヒーやお茶等のカフェインを含有する飲料と同時に服用しないこと","",CAFF_SLEEP,"カフェインが過量摂取となり、中枢神経系、循環器系等に作用が強く現れるおそれがあるため。",405);
+
+// 併用
+R("combo","","本剤を使用している間は、次の医薬品を使用しないこと：他の瀉下薬（下剤）","","茵蔯蒿湯、大黄甘草湯、大黄牡丹皮湯、麻子仁丸、桃核承気湯、防風通聖散、三黄瀉心湯、大柴胡湯、乙字湯（ダイオウを含む場合）、瀉下成分が配合された駆虫薬","激しい腹痛を伴う下痢等の副作用が現れやすくなるため。",405);
+R("combo","","本剤を使用している間は、次の医薬品を使用しないこと：ヒマシ油","","駆虫薬（瀉下成分が配合されていない場合）","駆虫成分が腸管内で吸収されやすくなるため。",405);
+R("combo","","本剤を使用している間は、次の医薬品を使用しないこと：駆虫薬","","ヒマシ油","駆虫成分が腸管内で吸収されやすくなるため。",405);
+
+// 部位など
+const IRR="皮膚刺激成分により、強い刺激や痛みを生じるおそれがあるため。";
+R("site","",SITE+"目や目の周囲、粘膜（例えば、口腔、鼻腔、膣等）","",MIZU,IRR,405);
+R("site","",SITE+"目の周囲、粘膜等","","外用鎮痒消炎薬（エアゾール剤に限る）","エアゾール剤は特定の局所に使用することが一般に困難であり、目などに薬剤が入るおそれがあるため。",405);
+R("site","",SITE+"目の周囲、粘膜等","","外用鎮痛消炎薬",IRR,405);
+R("site","",SITE+"湿疹、かぶれ、傷口","","外用鎮痛消炎薬",IRR,405);
+R("site","",SITE+"陰のう、外陰部等","",MIZU,"角質層が薄いため白癬菌は寄生しにくく、いんきん・たむしではなく陰のう湿疹等、他の病気である可能性があるため。また、皮膚刺激成分により、強い刺激や痛みを生じるおそれがあるため。",406);
+R("site","",SITE+"湿疹","",MIZU,"湿疹に対する効果はなく、誤って使用すると悪化させるおそれがあるため。",406);
+R("site","",SITE+"湿潤、ただれ、亀裂や外傷のひどい患部","","みずむし・たむし用薬（液剤、軟膏剤又はエアゾール剤の場合）","刺激成分により、強い刺激や痛みが現れることがあるため。",406);
+R("site","",SITE+"目の周囲、粘膜、やわらかな皮膚面（首の回り等）、顔面等","",UONOME,"角質溶解作用の強い薬剤であり、誤って目に入ると障害を与える危険性があるため。粘膜や首の回り等の柔らかい皮膚面、顔面等に対しては作用が強すぎるため。",406);
+R("site","",SITE+"炎症又は傷のある患部","",UONOME,"刺激が強く、症状を悪化させるおそれがあるため。",406);
+R("site","",SITE+"ただれ、化膿している患部","","殺菌消毒薬（液体絆創膏）","湿潤した患部に用いると、分泌液が貯留して症状を悪化させることがあるため。",406);
+R("site","",SITE+"湿潤、ただれのひどい患部、深い傷、ひどいやけどの患部","","バシトラシンが配合された化膿性皮膚疾患用薬","刺激が強く、症状を悪化させるおそれがあるため。",406);
+R("site","","本剤の使用中は、天候にかかわらず、戸外活動を避けるとともに、日常の外出時も本剤の貼付部を衣服、サポーター等で覆い、紫外線に当てないこと。なお、貼付後も当分の間、同様の注意をすること","",KETO_EXT,"使用中又は使用後しばらくしてから重篤な光線過敏症が現れることがあるため。",406);
+
+// ---------- overlap helpers (so a "wrong" choice is never also true) ----------
+const SALT=/(臭化水素酸塩水和物|リン酸塩水和物|リン酸塩|マレイン酸塩|塩酸塩水和物|塩酸塩|クエン酸塩|硫酸塩|水和物|ヒベンズ酸塩|ナトリウム|アルミニウム|類)$/;
+function stems(t){
+  t=t.replace(/（[^）]*）/g,"");
+  const out=new Set();
+  t.split(/、|・|又は|及び/).forEach(s=>{
+    s=s.replace(/(が配合された|を含有する|を含む|を主薬とする|等の|等).*$/,"").replace(/^他の/,"").trim();
+    const st=s.replace(SALT,"").trim();
+    [s,st].forEach(x=>{if(x.length>=3)out.add(x)});
+  });
+  return [...out];
+}
+D.forEach(d=>{d.st=stems(d.target);d.sc=new Set(d.scope.replace(/（[^）]*）/g,"").split("、").filter(Boolean))});
+function overlap(a,b){
+  if(a.target===b.target)return true;
+  return a.st.some(s=>b.target.includes(s))||b.st.some(s=>a.target.includes(s));
+}
+function scopeOverlap(a,b){
+  if(!a.sc.size||!b.sc.size)return true;
+  for(const x of a.sc)if(b.sc.has(x))return true;
+  return false;
+}
+const shuffle=a=>{a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a};
+function pick(correct,item,getter,invalid){
+  const same=shuffle(D.filter(d=>d.sec===item.sec)),other=shuffle(D.filter(d=>d.sec!==item.sec));
+  const seen=new Set([correct]),res=[];
+  for(const d of same.concat(other)){
+    const v=getter(d);
+    if(!v||seen.has(v)||invalid(d,v))continue;
+    seen.add(v);res.push(v);if(res.length===3)break;
+  }
+  return res;
+}
+
+// ---------- quiz ----------
+const MODES={
+  cond:{label:"誰に・どんな時ダメ？",ok:d=>d.sec!=="drive",prompt:d=>"この成分・薬効群について「してはいけないこと」に当たるのは？"},
+  target:{label:"どの成分がダメ？",ok:()=>true,prompt:d=>d.sec==="combo"?"この注意が記載されている医薬品（本剤）は？":"この注意が記載されている成分・薬効群は？"},
+  reason:{label:"なぜダメ？",ok:d=>!!d.reason,prompt:d=>d.sec==="drive"?"懸念される症状は？":"理由として正しいのは？"}
+};
+const S={mode:"cond",secs:new Set(Object.keys(SECS)),weak:false,n:0,c:0,queue:[],cur:null,opts:[],done:false};
+const store={get(k,f){try{const v=localStorage.getItem(k);return v?JSON.parse(v):f}catch(e){return f}},set(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}};
+let miss=new Set(store.get("shiteha-miss",[]));
+const mkey=(m,id)=>m+":"+id;
+
+function eligible(){
+  return D.filter(d=>S.secs.has(d.sec)&&MODES[S.mode].ok(d)&&(!S.weak||miss.has(mkey(S.mode,d.id))));
+}
+function build(d){
+  if(S.mode==="cond"){
+    const bad=new Set(D.filter(x=>overlap(x,d)).map(x=>x.cond));
+    return {correct:d.cond,dis:pick(d.cond,d,x=>x.cond,(x,v)=>bad.has(v)||x.sec==="drive"||v===ALLERGY)};
+  }
+  if(S.mode==="target"){
+    const valid=D.filter(x=>x.cond===d.cond&&scopeOverlap(x,d));
+    return {correct:d.target,dis:pick(d.target,d,x=>x.target,(x,v)=>v===ALL||valid.some(y=>overlap(x,y)))};
+  }
+  return {correct:d.reason,dis:pick(d.reason,d,x=>x.reason,(x,v)=>d.sec==="drive"?x.sec!=="drive":x.sec==="drive")};
+}
+function next(){
+  const pool=eligible();
+  const q=document.getElementById("quiz");
+  if(!pool.length){
+    S.cur=null;
+    q.innerHTML='<div class="card"><div class="card-head"><span>してはいけないこと</span></div><div class="empty">'+(S.weak?"間違えた問題はありません。範囲や形式を変えるか、復習をオフにしてください。":"この組み合わせで出せる問題がありません。範囲を選び直してください。")+'</div></div>';
+    return;
+  }
+  S.queue=S.queue.filter(id=>pool.some(p=>p.id===id));
+  if(!S.queue.length)S.queue=shuffle(pool.map(p=>p.id));
+  const d=D[S.queue.shift()];
+  const b=build(d);
+  S.cur=d;S.done=false;S.correct=b.correct;S.opts=shuffle([b.correct,...b.dis]);
+  render();
+}
+const esc=s=>s.replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+function givenHTML(d){
+  const rows=[];
+  if(S.mode!=="cond")rows.push(["注意",d.cond]);
+  if(d.scope)rows.push([d.sec==="drive"?"薬効群":"薬効群",d.scope]);
+  if(S.mode!=="target")rows.push([d.sec==="combo"?"本剤":"成分等",d.target]);
+  return '<dl>'+rows.map(r=>'<dt>'+r[0]+'</dt><dd>'+esc(r[1])+'</dd>').join("")+'</dl>';
+}
+function render(){
+  const d=S.cur,m=MODES[S.mode];
+  const head='<div class="card-head"><span>してはいけないこと｜'+SECS[d.sec]+(d.sub?"・"+d.sub:"")+'</span><span>'+m.label+'</span></div>';
+  let h='<div class="card">'+head+'<div class="card-body"><p class="q-prompt">'+m.prompt(d)+'</p><div class="given">'+givenHTML(d)+'</div><div class="opts">';
+  S.opts.forEach((o,i)=>{
+    let cls="opt";
+    if(S.done){if(o===S.correct)cls+=" right";else if(o===S.picked)cls+=" wrong";}
+    h+='<button class="'+cls+'" data-i="'+i+'"'+(S.done?" disabled":"")+'><span class="k">'+(i+1)+'</span><span>'+esc(o)+'</span></button>';
+  });
+  h+='</div>';
+  if(S.done){
+    const right=S.picked===S.correct;
+    h+='<div class="fb"><p class="verdict '+(right?"ok":"ng")+'">'+(right?"正解":"不正解")+'</p><dl class="entry">'+
+      '<dt>注意</dt><dd>'+esc(d.cond)+'</dd>'+(d.scope?'<dt>薬効群</dt><dd>'+esc(d.scope)+'</dd>':'')+
+      '<dt>'+(d.sec==="combo"?"本剤":"成分等")+'</dt><dd>'+esc(d.target)+'</dd>'+
+      '<dt>'+(d.sec==="drive"?"懸念される症状":"理由")+'</dt><dd>'+(d.reason?esc(d.reason):"（手引きに記載なし）")+'</dd></dl>'+
+      '<span class="src">手引き 第5章 別表5-1 p.'+d.page+'</span>'+
+      '<button class="next" id="nextbtn">次の問題（Enter）</button></div>';
+  }
+  h+='</div></div>';
+  const q=document.getElementById("quiz");q.innerHTML=h;
+  q.querySelectorAll(".opt").forEach(b=>b.addEventListener("click",()=>answer(+b.dataset.i)));
+  const nb=document.getElementById("nextbtn");if(nb){nb.addEventListener("click",next);nb.focus({preventScroll:true});}
+}
+function answer(i){
+  if(S.done||!S.cur)return;
+  S.picked=S.opts[i];S.done=true;S.n++;
+  const k=mkey(S.mode,S.cur.id);
+  if(S.picked===S.correct){S.c++;if(S.weak)miss.delete(k);}else miss.add(k);
+  store.set("shiteha-miss",[...miss]);
+  stats();render();
+}
+function stats(){
+  document.getElementById("st-n").textContent=S.n;
+  document.getElementById("st-c").textContent=S.c;
+  document.getElementById("st-p").textContent=S.n?Math.round(S.c/S.n*100)+"%":"–";
+  const w=document.getElementById("weak");
+  w.textContent="間違えた問題だけ（"+[...miss].filter(k=>k.startsWith(S.mode+":")).length+"）";
+  w.setAttribute("aria-pressed",S.weak);
+}
+document.addEventListener("keydown",e=>{
+  if(document.getElementById("view-quiz").hidden||e.target.tagName==="INPUT")return;
+  if(!S.done&&/^[1-4]$/.test(e.key)&&S.opts[+e.key-1]){answer(+e.key-1);}
+  else if(S.done&&e.key==="Enter"&&document.activeElement.id!=="nextbtn"){e.preventDefault();next();}
+});
+
+// controls
+const modesEl=document.getElementById("modes");
+Object.entries(MODES).forEach(([k,m])=>{
+  const b=document.createElement("button");b.className="chip";b.id="mode-"+k;b.textContent=m.label;b.setAttribute("aria-pressed",k===S.mode);
+  b.addEventListener("click",()=>{S.mode=k;modesEl.querySelectorAll(".chip").forEach(c=>c.setAttribute("aria-pressed",c===b));S.queue=[];stats();next();});
+  modesEl.appendChild(b);
+});
+const secsEl=document.getElementById("secs");
+Object.entries(SECS).forEach(([k,l])=>{
+  const b=document.createElement("button");b.className="chip";b.id="sec-"+k;b.textContent=l;b.setAttribute("aria-pressed","true");
+  b.addEventListener("click",()=>{
+    if(S.secs.has(k)){if(S.secs.size===1)return;S.secs.delete(k);}else S.secs.add(k);
+    b.setAttribute("aria-pressed",S.secs.has(k));S.queue=[];next();
+  });
+  secsEl.appendChild(b);
+});
+document.getElementById("weak").addEventListener("click",()=>{S.weak=!S.weak;S.queue=[];stats();next();});
+
+// tabs
+function tab(which){
+  document.getElementById("tab-quiz").setAttribute("aria-selected",which==="quiz");
+  document.getElementById("tab-list").setAttribute("aria-selected",which==="list");
+  document.getElementById("view-quiz").hidden=which!=="quiz";
+  document.getElementById("view-list").hidden=which!=="list";
+}
+document.getElementById("tab-quiz").addEventListener("click",()=>tab("quiz"));
+document.getElementById("tab-list").addEventListener("click",()=>tab("list"));
+
+// list
+function renderList(){
+  const q=document.getElementById("q").value.trim();
+  let h="";
+  Object.entries(SECS).forEach(([k,l])=>{
+    const rows=D.filter(d=>d.sec===k&&(!q||(d.cond+d.scope+d.target+d.reason).includes(q)));
+    if(!rows.length)return;
+    h+='<div class="group"><h2>'+l+'</h2>';
+    let sub=null;
+    rows.forEach(d=>{
+      if(d.sub&&d.sub!==sub){sub=d.sub;h+='<h3>'+sub+'</h3>';}
+      h+='<div class="li"><span class="c">'+esc(d.cond)+'<span class="tag">p.'+d.page+'</span></span>'+(d.scope?'<span class="s">薬効群：'+esc(d.scope)+'</span>':'')+
+        '<span class="t">'+esc(d.target)+'</span><span class="r">'+(d.reason?(d.sec==="drive"?"症状：":"理由：")+esc(d.reason):"理由：（記載なし）")+'</span></div>';
+    });
+    h+='</div>';
+  });
+  document.getElementById("list").innerHTML=h||'<div class="empty">「'+esc(q)+'」に当てはまる項目はありません。</div>';
+}
+document.getElementById("q").addEventListener("input",renderList);
+
+stats();next();renderList();
+</script>
+</body>
+</html>
