@@ -109,6 +109,35 @@ h1{font-family:var(--display);font-weight:900;font-size:clamp(1.5rem,5vw,2rem);l
 .btn.danger.go{background:var(--stop);color:var(--sheet)}
 .note{font-size:.8rem;color:var(--muted);margin:0}
 .msg{font-size:.85rem;font-weight:700}
+.home{display:flex;flex-direction:column;gap:6px}
+.homebar{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap}
+.ghead{font:700 .9rem var(--display);margin:14px 0 8px;padding-bottom:4px;border-bottom:2px solid var(--stop);letter-spacing:.04em}
+.units{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,210px),1fr));gap:10px}
+.unit{font:inherit;text-align:left;color:var(--ink);background:var(--sheet);border:1px solid var(--rule);border-radius:4px;padding:12px 14px;cursor:pointer;display:flex;flex-direction:column;gap:6px;min-width:0}
+.unit:hover:not(:disabled){border-color:var(--ink)}
+.unit:disabled{opacity:.55;cursor:default}
+.unit.u-weak:not(:disabled){border-color:var(--stop);background:var(--stop-soft)}
+.utop{display:flex;justify-content:space-between;align-items:baseline;gap:8px}
+.uname{font:700 1rem var(--display)}
+.ucount{font:700 .85rem var(--display);color:var(--stop);white-space:nowrap;font-variant-numeric:tabular-nums}
+.unote{font-size:.78rem;color:var(--muted);line-height:1.5}
+.ubar{height:6px;background:var(--chip);border-radius:3px;overflow:hidden}
+.ubar i{display:block;height:100%;background:var(--ok)}
+.umeta{font-size:.75rem;color:var(--muted);font-variant-numeric:tabular-nums}
+.umeta .wk{color:var(--stop);font-weight:700}
+.playbar{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.back{font:700 .85rem var(--display);background:none;border:1px solid var(--rule);color:var(--ink);border-radius:4px;padding:6px 12px;cursor:pointer}
+.back:hover{border-color:var(--ink)}
+.ptitle{font:900 1.2rem var(--display);margin:0}
+.progress{display:grid;grid-template-columns:auto 1fr auto;gap:10px;align-items:center}
+.pgt{font-size:.85rem;font-weight:700;font-variant-numeric:tabular-nums;white-space:nowrap}
+.pgbar{height:8px;background:var(--chip);border-radius:4px;overflow:hidden}
+.pgbar i{display:block;height:100%;background:var(--stop)}
+.result .score{font:900 1.1rem var(--display);margin:0}
+.result .score b{font-size:2.4rem;color:var(--stop);font-variant-numeric:tabular-nums}
+.result .score span{font-size:.95rem;color:var(--muted);margin-left:6px}
+.missed .lbl{margin:0 0 2px}
+@media (prefers-reduced-motion:no-preference){.pgbar i,.ubar i{transition:width .25s}}
 footer{font-size:.75rem;color:var(--muted);border-top:1px solid var(--rule);padding-top:12px}
 footer a{color:inherit}
 @media (prefers-reduced-motion:no-preference){.opt{transition:background .15s,border-color .15s}}
@@ -122,16 +151,30 @@ footer a{color:inherit}
   </header>
 
   <div class="tabs" role="tablist">
-    <button class="tab" role="tab" id="tab-quiz" aria-selected="true">クイズ</button>
-    <button class="tab" role="tab" id="tab-list" aria-selected="false">一覧</button>
+    <button class="tab" role="tab" id="tab-quiz" aria-selected="true">問題</button>
+    <button class="tab" role="tab" id="tab-list" aria-selected="false">表で読む</button>
     <button class="tab" role="tab" id="tab-rec" aria-selected="false">記録</button>
   </div>
 
-  <section id="view-quiz" class="controls" aria-labelledby="tab-quiz">
+  <section id="view-home" class="home">
+    <div class="homebar">
+      <div class="stats" id="home-stats"></div>
+      <button class="chip" id="snd" aria-pressed="true">効果音 ON</button>
+    </div>
+    <div id="units"></div>
+  </section>
+
+  <section id="view-play" class="controls" hidden>
+    <div class="playbar">
+      <button class="back" id="back">← 問題一覧</button>
+      <h2 class="ptitle" id="play-title"></h2>
+    </div>
     <div class="row" id="modes"><span class="lbl">出題形式</span></div>
-    <div class="row" id="secs"><span class="lbl">範囲</span></div>
-    <div class="row"><span class="lbl">復習・設定</span><button class="chip weak" id="weak" aria-pressed="false">間違えた問題だけ（0）</button><button class="chip" id="snd" aria-pressed="true">効果音 ON</button></div>
-    <div class="stats"><span>今回 <b id="st-c">0</b>/<b id="st-n">0</b>（<b id="st-p">–</b>）</span><span>今日 <b id="st-today">0</b>問</span><span>累計 <b id="st-total">0</b>問</span></div>
+    <div class="progress">
+      <span id="pg-text" class="pgt">問 1 / 1</span>
+      <span class="pgbar"><i id="pg-bar"></i></span>
+      <span id="pg-score" class="pgt">正解 0</span>
+    </div>
     <div id="quiz"></div>
   </section>
 
@@ -338,11 +381,24 @@ function pick(correct,item,getter,invalid){
 
 // ---------- quiz ----------
 const MODES={
-  cond:{label:"誰に・どんな時ダメ？",ok:d=>d.sec!=="drive",prompt:d=>"この成分・薬効群について「してはいけないこと」に当たるのは？"},
-  target:{label:"どの成分がダメ？",ok:()=>true,prompt:d=>d.sec==="combo"?"この注意が記載されている医薬品（本剤）は？":"この注意が記載されている成分・薬効群は？"},
-  reason:{label:"なぜダメ？",ok:d=>!!d.reason,prompt:d=>d.sec==="drive"?"懸念される症状は？":"理由として正しいのは？"}
+  cond:{label:"誰に・どんな時ダメ？",short:"誰に・どんな時",ok:d=>d.sec!=="drive",prompt:d=>"この成分・薬効群について「してはいけないこと」に当たるのは？"},
+  target:{label:"どの成分がダメ？",short:"どの成分",ok:()=>true,prompt:d=>d.sec==="combo"?"この注意が記載されている医薬品（本剤）は？":"この注意が記載されている成分・薬効群は？"},
+  reason:{label:"なぜダメ？",short:"なぜ",ok:d=>!!d.reason,prompt:d=>d.sec==="drive"?"懸念される症状は？":"理由として正しいのは？"}
 };
-const S={mode:"cond",secs:new Set(Object.keys(SECS)),weak:false,n:0,c:0,queue:[],cur:null,opts:[],done:false};
+function build(d,mode){
+  if(mode==="cond"){
+    const bad=new Set(D.filter(x=>overlap(x,d)).map(x=>x.cond));
+    return {correct:d.cond,dis:pick(d.cond,d,x=>x.cond,(x,v)=>bad.has(v)||x.sec==="drive"||v===ALLERGY)};
+  }
+  if(mode==="target"){
+    const valid=D.filter(x=>x.cond===d.cond&&scopeOverlap(x,d));
+    return {correct:d.target,dis:pick(d.target,d,x=>x.target,(x,v)=>v===ALL||valid.some(y=>overlap(x,y)))};
+  }
+  return {correct:d.reason,dis:pick(d.reason,d,x=>x.reason,(x,v)=>d.sec==="drive"?x.sec!=="drive":x.sec==="drive")};
+}
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+
+// ---------- storage ----------
 const store={get(k,f){try{const v=localStorage.getItem(k);return v?JSON.parse(v):f}catch(e){return f}},set(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}};
 const mkey=(m,id)=>m+":"+id;
 const ymd=d=>d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");
@@ -366,6 +422,15 @@ function save(){REC.miss=[...miss];store.set("shiteha-record",REC);}
 
 // ---------- sound (Web Audio, no files) ----------
 let AC=null;
+function unlockAudio(){
+  try{
+    if(navigator.audioSession)navigator.audioSession.type="playback"; // iPhone: play even on silent (iOS 17+)
+    AC=AC||new (window.AudioContext||window.webkitAudioContext)();
+    if(AC.state!=="running")AC.resume();
+    const b=AC.createBuffer(1,1,22050),s=AC.createBufferSource();s.buffer=b;s.connect(AC.destination);s.start(0);
+  }catch(e){}
+}
+["pointerdown","touchend","keydown"].forEach(ev=>document.addEventListener(ev,()=>{if(REC.sound)unlockAudio();},{capture:true,passive:true}));
 function tone(f,t,dur,type,vol,hold){
   const o=AC.createOscillator(),g=AC.createGain();
   o.type=type;o.frequency.setValueAtTime(f,t);
@@ -374,17 +439,6 @@ function tone(f,t,dur,type,vol,hold){
   else g.gain.exponentialRampToValueAtTime(0.0001,t+dur);
   o.connect(g).connect(AC.destination);o.start(t);o.stop(t+dur+0.05);
 }
-function unlockAudio(){
-  try{
-    // iPhone: let sound play even when the ringer switch is on silent (iOS 17+)
-    if(navigator.audioSession)navigator.audioSession.type="playback";
-    AC=AC||new (window.AudioContext||window.webkitAudioContext)();
-    if(AC.state!=="running")AC.resume();
-    // play one silent sample inside the gesture so iOS/Safari actually opens the output
-    const b=AC.createBuffer(1,1,22050),s=AC.createBufferSource();s.buffer=b;s.connect(AC.destination);s.start(0);
-  }catch(e){}
-}
-["pointerdown","touchend","keydown"].forEach(ev=>document.addEventListener(ev,()=>{if(REC.sound)unlockAudio();},{capture:true,passive:true}));
 function sfx(ok){
   if(!REC.sound)return;
   try{
@@ -395,188 +449,198 @@ function sfx(ok){
     else{tone(150,t,0.2,"square",0.1,true);tone(150,t+0.27,0.42,"square",0.1,true);}                          // ブッブー
   }catch(e){}
 }
+function syncSoundBtn(){const sb=document.getElementById("snd");sb.textContent="効果音 "+(REC.sound?"ON":"OFF");sb.setAttribute("aria-pressed",REC.sound);}
+document.getElementById("snd").addEventListener("click",()=>{REC.sound=!REC.sound;save();syncSoundBtn();if(REC.sound)sfx(true);});
 
-function eligible(){
-  return D.filter(d=>S.secs.has(d.sec)&&MODES[S.mode].ok(d)&&(!S.weak||miss.has(mkey(S.mode,d.id))));
+// ---------- units (home cards) ----------
+const G1="次の人は使用（服用）しないこと",G2="その他の「してはいけないこと」",G0="まとめて解く";
+const UNITS=[
+  {id:"weak",group:G0,name:"間違えた問題",note:"間違えた問題を、間違えた形式のまま出題"},
+  {id:"all",group:G0,name:"全範囲ランダム",note:"全97項目からランダムに20問",filter:()=>true,size:20},
+  {id:"alg",group:G1,name:"アレルギーの既往歴",note:"本剤・牛乳・喘息・ケトプロフェン関連",filter:d=>d.sub===sA},
+  {id:"sym",group:G1,name:"症状・状態",note:"胃酸過多・前立腺肥大・化膿など",filter:d=>d.sub===sB},
+  {id:"dis",group:G1,name:"基礎疾患",note:"心臓病・胃潰瘍・高血圧・甲状腺・糖尿病・不眠",filter:d=>d.sub===sC},
+  {id:"oth",group:G1,name:"透析・口の中の傷",note:"アルミニウム・クロルヘキシジン",filter:d=>d.sub===sD},
+  {id:"kid",group:G1,name:"小児の年齢制限",note:"15歳・12歳・6歳・3歳未満",filter:d=>d.sub===sE},
+  {id:"preg",group:G1,name:"妊婦・授乳婦",note:"妊婦・出産予定日12週以内・授乳中",filter:d=>d.sub===sF},
+  {id:"drive",group:G2,name:"乗物・機械の運転",note:"眠気・目のかすみ・異常なまぶしさ",filter:d=>d.sec==="drive"},
+  {id:"cont",group:G2,name:"連用に関する注意",note:"長期連用・短期間・1週間以上など",filter:d=>d.sec==="cont"},
+  {id:"mass",group:G2,name:"大量使用・乱用",note:"刺激性瀉下剤・濫用防止医薬品・コデイン",filter:d=>d.sec==="mass"},
+  {id:"food",group:G2,name:"飲酒・カフェイン飲料",note:"服用前後の飲酒・コーヒーやお茶",filter:d=>d.sec==="food"},
+  {id:"combo",group:G2,name:"併用しない薬",note:"瀉下薬・ヒマシ油・駆虫薬",filter:d=>d.sec==="combo"},
+  {id:"site",group:G2,name:"使用しない部位など",note:"目の周囲・粘膜・湿疹・傷口・紫外線",filter:d=>d.sec==="site"}
+];
+const unitById=id=>UNITS.find(u=>u.id===id);
+const unitItems=u=>u.filter?D.filter(u.filter):[];
+function unitStats(u){
+  const ids=new Set(unitItems(u).map(d=>d.id));let n=0,c=0;const seen=new Set();
+  for(const [k,v] of Object.entries(REC.hist)){const id=+k.split(":")[1];if(ids.has(id)){n+=v.n;c+=v.c;seen.add(id);}}
+  let w=0;for(const k of miss)if(ids.has(+k.split(":")[1]))w++;
+  return {total:ids.size,seen:seen.size,n,c,w};
 }
-function build(d){
-  if(S.mode==="cond"){
-    const bad=new Set(D.filter(x=>overlap(x,d)).map(x=>x.cond));
-    return {correct:d.cond,dis:pick(d.cond,d,x=>x.cond,(x,v)=>bad.has(v)||x.sec==="drive"||v===ALLERGY)};
-  }
-  if(S.mode==="target"){
-    const valid=D.filter(x=>x.cond===d.cond&&scopeOverlap(x,d));
-    return {correct:d.target,dis:pick(d.target,d,x=>x.target,(x,v)=>v===ALL||valid.some(y=>overlap(x,y)))};
-  }
-  return {correct:d.reason,dis:pick(d.reason,d,x=>x.reason,(x,v)=>d.sec==="drive"?x.sec!=="drive":x.sec==="drive")};
-}
-function next(){
-  const pool=eligible();
-  const q=document.getElementById("quiz");
-  if(!pool.length){
-    S.cur=null;
-    q.innerHTML='<div class="card"><div class="card-head"><span>してはいけないこと</span></div><div class="empty">'+(S.weak?"間違えた問題はありません。範囲や形式を変えるか、復習をオフにしてください。":"この組み合わせで出せる問題がありません。範囲を選び直してください。")+'</div></div>';
-    return;
-  }
-  S.queue=S.queue.filter(id=>pool.some(p=>p.id===id));
-  if(!S.queue.length)S.queue=shuffle(pool.map(p=>p.id));
-  const d=D[S.queue.shift()];
-  const b=build(d);
-  S.cur=d;S.done=false;S.correct=b.correct;S.opts=shuffle([b.correct,...b.dis]);
-  render();
-}
-const esc=s=>s.replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
-function givenHTML(d){
-  const rows=[];
-  if(S.mode!=="cond")rows.push(["注意",d.cond]);
-  if(d.scope)rows.push([d.sec==="drive"?"薬効群":"薬効群",d.scope]);
-  if(S.mode!=="target")rows.push([d.sec==="combo"?"本剤":"成分等",d.target]);
-  return '<dl>'+rows.map(r=>'<dt>'+r[0]+'</dt><dd>'+esc(r[1])+'</dd>').join("")+'</dl>';
-}
-function render(){
-  const d=S.cur,m=MODES[S.mode];
-  const head='<div class="card-head"><span>してはいけないこと｜'+SECS[d.sec]+(d.sub?"・"+d.sub:"")+'</span><span>'+m.label+'</span></div>';
-  let h='<div class="card">'+head+'<div class="card-body"><p class="q-prompt">'+m.prompt(d)+'</p><div class="given">'+givenHTML(d)+'</div><div class="opts">';
-  S.opts.forEach((o,i)=>{
-    let cls="opt";
-    if(S.done){if(o===S.correct)cls+=" right";else if(o===S.picked)cls+=" wrong";}
-    h+='<button class="'+cls+'" data-i="'+i+'"'+(S.done?" disabled":"")+'><span class="k">'+(i+1)+'</span><span>'+esc(o)+'</span></button>';
+const pct=(c,n)=>n?Math.round(c/n*100)+"%":"–";
+function renderHome(){
+  const td=REC.days[today()]||{n:0,c:0};
+  document.getElementById("home-stats").innerHTML='<span>今日 <b>'+td.n+'</b>問（正答率 <b>'+pct(td.c,td.n)+'</b>）</span><span>累計 <b>'+REC.total.n+'</b>問</span>';
+  let h="",g=null;
+  UNITS.forEach(u=>{
+    if(u.group!==g){if(g!==null)h+='</div>';g=u.group;h+='<h2 class="ghead">'+g+'</h2><div class="units">';}
+    let count,meta,bar=0,dis=false,cls="unit";
+    if(u.id==="weak"){
+      count=miss.size?miss.size+"問":"0問";dis=!miss.size;cls+=" u-weak";
+      meta=miss.size?"正解すると一覧から消えます":"まだありません";
+    }else if(u.id==="all"){
+      const s=unitStats(u);count="20問";bar=s.seen/s.total*100;
+      meta="解いた "+s.seen+"/"+s.total+"・正答率 "+pct(s.c,s.n);
+    }else{
+      const s=unitStats(u);count=s.total+"問";bar=s.seen/s.total*100;
+      meta="解いた "+s.seen+"/"+s.total+"・正答率 "+pct(s.c,s.n)+(s.w?'・<span class="wk">苦手 '+s.w+'</span>':"");
+    }
+    h+='<button class="'+cls+'" data-u="'+u.id+'"'+(dis?" disabled":"")+'><span class="utop"><span class="uname">'+u.name+'</span><span class="ucount">'+count+'</span></span>'+
+      '<span class="unote">'+u.note+'</span>'+(u.id!=="weak"?'<span class="ubar"><i style="width:'+bar+'%"></i></span>':'')+
+      '<span class="umeta">'+meta+'</span></button>';
   });
   h+='</div>';
-  if(S.done){
-    const right=S.picked===S.correct;
+  const el=document.getElementById("units");el.innerHTML=h;
+  el.querySelectorAll(".unit").forEach(b=>b.addEventListener("click",()=>openUnit(b.dataset.u)));
+}
+
+// ---------- routing ----------
+let P=null,lastMode="cond";
+function show(v){
+  ["home","play","list","rec"].forEach(x=>document.getElementById("view-"+x).hidden=x!==v);
+  document.getElementById("tab-quiz").setAttribute("aria-selected",v==="home"||v==="play");
+  document.getElementById("tab-list").setAttribute("aria-selected",v==="list");
+  document.getElementById("tab-rec").setAttribute("aria-selected",v==="rec");
+  if(v==="rec")renderRec();
+  if(v==="home")renderHome();
+}
+function openUnit(id){
+  if(location.hash!=="#q-"+id){P=null;location.hash="q-"+id;}else{P=null;route();}
+}
+function route(){
+  const h=location.hash.slice(1),u=h.startsWith("q-")&&unitById(h.slice(2));
+  if(u){show("play");if(!P||P.unit!==u.id)startRound(u.id);try{window.scrollTo(0,0)}catch(e){}}
+  else{P=null;show("home");}
+}
+window.addEventListener("hashchange",route);
+function goHome(){if(location.hash&&location.hash!=="#"){location.hash="";}else route();}
+document.getElementById("back").addEventListener("click",goHome);
+document.getElementById("tab-quiz").addEventListener("click",()=>{if(P)show("play");else goHome();});
+document.getElementById("tab-list").addEventListener("click",()=>show("list"));
+document.getElementById("tab-rec").addEventListener("click",()=>show("rec"));
+
+// ---------- a round ----------
+function startRound(uid,entries){
+  const u=unitById(uid);
+  let mode=lastMode;
+  if(u.id!=="weak"&&!unitItems(u).some(d=>MODES[mode].ok(d)))mode="target";
+  if(!entries){
+    if(u.id==="weak")entries=shuffle([...miss].map(k=>{const [m,id]=k.split(":");return {mode:m,id:+id}}).filter(e=>D[e.id]&&MODES[e.mode]));
+    else{let it=shuffle(unitItems(u).filter(d=>MODES[mode].ok(d)));if(u.size)it=it.slice(0,u.size);entries=it.map(d=>({mode,id:d.id}));}
+  }
+  P={unit:uid,mode,round:entries,i:0,score:0,missed:[],done:false,end:false};
+  document.getElementById("play-title").textContent=u.name;
+  renderModes(u);
+  if(!entries.length){
+    document.getElementById("quiz").innerHTML='<div class="card"><div class="card-head"><span>'+esc(u.name)+'</span></div><div class="empty">出せる問題がありません。</div></div>';
+    progress();return;
+  }
+  loadQ();
+}
+function renderModes(u){
+  const el=document.getElementById("modes");
+  if(u.id==="weak"){el.hidden=true;return;}
+  el.hidden=false;
+  el.innerHTML='<span class="lbl">出題形式（押すとこの分類を最初から）</span>';
+  Object.entries(MODES).forEach(([k,m])=>{
+    const ok=unitItems(u).some(d=>m.ok(d));
+    const b=document.createElement("button");b.className="chip";b.id="mode-"+k;b.textContent=m.label;
+    b.setAttribute("aria-pressed",k===P.mode);b.disabled=!ok;if(!ok)b.title="この分類では出題できません";
+    b.addEventListener("click",()=>{lastMode=k;startRound(P.unit);});
+    el.appendChild(b);
+  });
+}
+function progress(){
+  const n=P.round.length,doneN=P.end?n:P.i+(P.done?1:0);
+  document.getElementById("pg-text").textContent=P.end?"結果":"問 "+Math.min(P.i+1,n)+" / "+n;
+  document.getElementById("pg-bar").style.width=(n?doneN/n*100:0)+"%";
+  document.getElementById("pg-score").textContent="正解 "+P.score;
+}
+function loadQ(){
+  const e=P.round[P.i],d=D[e.id],b=build(d,e.mode);
+  P.cur=d;P.qmode=e.mode;P.correct=b.correct;P.opts=shuffle([b.correct,...b.dis]);P.done=false;P.picked=null;
+  renderQ();progress();
+}
+function givenHTML(d,mode){
+  const rows=[];
+  if(mode!=="cond")rows.push(["注意",d.cond]);
+  if(d.scope)rows.push(["薬効群",d.scope]);
+  if(mode!=="target")rows.push([d.sec==="combo"?"本剤":"成分等",d.target]);
+  return '<dl>'+rows.map(r=>'<dt>'+r[0]+'</dt><dd>'+esc(r[1])+'</dd>').join("")+'</dl>';
+}
+function renderQ(){
+  const d=P.cur,m=MODES[P.qmode],last=P.i===P.round.length-1;
+  let h='<div class="card"><div class="card-head"><span>してはいけないこと｜'+SECS[d.sec]+(d.sub?"・"+d.sub:"")+'</span><span>'+m.label+'</span></div><div class="card-body"><p class="q-prompt">'+m.prompt(d)+'</p><div class="given">'+givenHTML(d,P.qmode)+'</div><div class="opts">';
+  P.opts.forEach((o,i)=>{
+    let cls="opt";
+    if(P.done){if(o===P.correct)cls+=" right";else if(o===P.picked)cls+=" wrong";}
+    h+='<button class="'+cls+'" data-i="'+i+'"'+(P.done?" disabled":"")+'><span class="k">'+(i+1)+'</span><span>'+esc(o)+'</span></button>';
+  });
+  h+='</div>';
+  if(P.done){
+    const right=P.picked===P.correct;
     h+='<div class="fb"><p class="verdict '+(right?"ok":"ng")+'">'+(right?"正解":"不正解")+'</p><dl class="entry">'+
       '<dt>注意</dt><dd>'+esc(d.cond)+'</dd>'+(d.scope?'<dt>薬効群</dt><dd>'+esc(d.scope)+'</dd>':'')+
       '<dt>'+(d.sec==="combo"?"本剤":"成分等")+'</dt><dd>'+esc(d.target)+'</dd>'+
       '<dt>'+(d.sec==="drive"?"懸念される症状":"理由")+'</dt><dd>'+(d.reason?esc(d.reason):"（手引きに記載なし）")+'</dd></dl>'+
       '<span class="src">手引き 第5章 別表5-1 p.'+d.page+'</span>'+
-      '<button class="next" id="nextbtn">次の問題（Enter）</button></div>';
+      '<button class="next" id="nextbtn">'+(last?"結果を見る":"次の問題")+'（Enter）</button></div>';
   }
   h+='</div></div>';
   const q=document.getElementById("quiz");q.innerHTML=h;
   q.querySelectorAll(".opt").forEach(b=>b.addEventListener("click",()=>answer(+b.dataset.i)));
-  const nb=document.getElementById("nextbtn");if(nb){nb.addEventListener("click",next);nb.focus({preventScroll:true});}
+  const nb=document.getElementById("nextbtn");if(nb){nb.addEventListener("click",advance);nb.focus({preventScroll:true});}
 }
 function answer(i){
-  if(S.done||!S.cur)return;
-  S.picked=S.opts[i];S.done=true;S.n++;
-  const k=mkey(S.mode,S.cur.id);
-  const ok=S.picked===S.correct;
-  if(ok){S.c++;if(S.weak)miss.delete(k);}else miss.add(k);
+  if(!P||P.done||P.end||!P.cur)return;
+  P.picked=P.opts[i];P.done=true;
+  const d=P.cur,k=mkey(P.qmode,d.id),ok=P.picked===P.correct;
+  if(ok){P.score++;if(P.unit==="weak")miss.delete(k);}else{miss.add(k);P.missed.push(P.round[P.i]);}
   const h=REC.hist[k]||(REC.hist[k]={n:0,c:0,last:""});h.n++;if(ok)h.c++;h.last=today();
   const dy=REC.days[today()]||(REC.days[today()]={n:0,c:0});dy.n++;if(ok)dy.c++;
   REC.total.n++;if(ok)REC.total.c++;
-  save();sfx(ok);
-  stats();render();
+  save();sfx(ok);renderQ();progress();
 }
-function stats(){
-  document.getElementById("st-n").textContent=S.n;
-  document.getElementById("st-c").textContent=S.c;
-  document.getElementById("st-p").textContent=S.n?Math.round(S.c/S.n*100)+"%":"–";
-  const w=document.getElementById("weak");
-  w.textContent="間違えた問題だけ（"+[...miss].filter(k=>k.startsWith(S.mode+":")).length+"）";
-  w.setAttribute("aria-pressed",S.weak);
-  document.getElementById("st-today").textContent=(REC.days[today()]||{n:0}).n;
-  document.getElementById("st-total").textContent=REC.total.n;
-  const sb=document.getElementById("snd");
-  sb.textContent="効果音 "+(REC.sound?"ON":"OFF");sb.setAttribute("aria-pressed",REC.sound);
+function advance(){
+  if(!P||!P.done)return;
+  P.i++;
+  if(P.i>=P.round.length)renderEnd();else{loadQ();try{document.getElementById("view-play").scrollIntoView({block:"start"})}catch(e){}}
 }
-document.getElementById("snd").addEventListener("click",()=>{REC.sound=!REC.sound;save();stats();if(REC.sound)sfx(true);});
+function renderEnd(){
+  P.end=true;progress();
+  const u=unitById(P.unit),n=P.round.length,c=P.score;
+  const msg=c===n?"全問正解。この分類は仕上がっています。":c/n>=0.8?"あと少し。間違えた問題だけ解き直しましょう。":"間違えた問題を表で確認してから、もう一周しましょう。";
+  let h='<div class="card"><div class="card-head"><span>結果｜'+esc(u.name)+'</span><span>'+(u.id==="weak"?"復習":MODES[P.mode].label)+'</span></div><div class="card-body result">'+
+    '<p class="score"><b>'+c+'</b> / '+n+' 問正解<span>（'+pct(c,n)+'）</span></p><p class="note">'+msg+'</p>';
+  if(P.missed.length){
+    h+='<div class="missed"><p class="lbl">間違えた問題</p>'+P.missed.map(e=>{const d=D[e.id];return '<div class="weakli"><span class="m">'+MODES[e.mode].short+'</span><span>'+esc(d.cond)+' ⇔ '+esc(d.target)+'</span></div>'}).join("")+'</div>';
+  }
+  h+='<div class="btnrow">'+(P.missed.length?'<button class="next" id="retry-miss">間違えた'+P.missed.length+'問を解き直す</button>':'')+
+    '<button class="btn" id="retry-all">もう一周</button><button class="btn" id="to-home">問題一覧へ</button></div></div></div>';
+  document.getElementById("quiz").innerHTML=h;
+  const rm=document.getElementById("retry-miss");
+  if(rm){const ms=P.missed.slice();rm.addEventListener("click",()=>startRound(P.unit,shuffle(ms)));rm.focus({preventScroll:true});}
+  document.getElementById("retry-all").addEventListener("click",()=>startRound(P.unit));
+  document.getElementById("to-home").addEventListener("click",goHome);
+}
 document.addEventListener("keydown",e=>{
-  if(document.getElementById("view-quiz").hidden||e.target.tagName==="INPUT")return;
-  if(!S.done&&/^[1-4]$/.test(e.key)&&S.opts[+e.key-1]){answer(+e.key-1);}
-  else if(S.done&&e.key==="Enter"&&document.activeElement.id!=="nextbtn"){e.preventDefault();next();}
+  if(document.getElementById("view-play").hidden||!P||P.end||e.target.tagName==="INPUT")return;
+  if(!P.done&&/^[1-4]$/.test(e.key)&&P.opts&&P.opts[+e.key-1]){answer(+e.key-1);}
+  else if(P.done&&e.key==="Enter"&&document.activeElement.id!=="nextbtn"){e.preventDefault();advance();}
 });
 
-// controls
-const modesEl=document.getElementById("modes");
-Object.entries(MODES).forEach(([k,m])=>{
-  const b=document.createElement("button");b.className="chip";b.id="mode-"+k;b.textContent=m.label;b.setAttribute("aria-pressed",k===S.mode);
-  b.addEventListener("click",()=>{S.mode=k;modesEl.querySelectorAll(".chip").forEach(c=>c.setAttribute("aria-pressed",c===b));S.queue=[];stats();next();});
-  modesEl.appendChild(b);
-});
-const secsEl=document.getElementById("secs");
-Object.entries(SECS).forEach(([k,l])=>{
-  const b=document.createElement("button");b.className="chip";b.id="sec-"+k;b.textContent=l;b.setAttribute("aria-pressed","true");
-  b.addEventListener("click",()=>{
-    if(S.secs.has(k)){if(S.secs.size===1)return;S.secs.delete(k);}else S.secs.add(k);
-    b.setAttribute("aria-pressed",S.secs.has(k));S.queue=[];next();
-  });
-  secsEl.appendChild(b);
-});
-document.getElementById("weak").addEventListener("click",()=>{S.weak=!S.weak;S.queue=[];stats();next();});
-
-// tabs
-function tab(which){
-  ["quiz","list","rec"].forEach(t=>{
-    document.getElementById("tab-"+t).setAttribute("aria-selected",which===t);
-    document.getElementById("view-"+t).hidden=which!==t;
-  });
-  if(which==="rec")renderRec();
-}
-["quiz","list","rec"].forEach(t=>document.getElementById("tab-"+t).addEventListener("click",()=>tab(t)));
-
-// record view
-const MODE_SHORT={cond:"誰に・どんな時",target:"どの成分",reason:"なぜ"};
-function renderRec(){
-  const T=REC.total,days=Object.keys(REC.days).filter(k=>REC.days[k].n>0);
-  const td=REC.days[today()]||{n:0,c:0};
-  const pct=(c,n)=>n?Math.round(c/n*100)+"%":"–";
-  let h='<div><h2>これまでの記録</h2><div class="kpis">'+
-    '<div class="kpi"><span>累計回答</span><b>'+T.n+'</b></div>'+
-    '<div class="kpi"><span>累計正答率</span><b>'+pct(T.c,T.n)+'</b></div>'+
-    '<div class="kpi"><span>今日</span><b>'+td.n+'</b></div>'+
-    '<div class="kpi"><span>学習日数</span><b>'+days.length+'</b></div></div></div>';
-  // last 14 days
-  const list=[];for(let i=13;i>=0;i--){const d=new Date();d.setDate(d.getDate()-i);const k=ymd(d);list.push([d,REC.days[k]||{n:0,c:0}]);}
-  const max=Math.max(10,...list.map(x=>x[1].n));
-  h+='<div><h2>直近14日</h2><div class="bars">'+list.map(([d,v])=>'<div class="bar" title="'+(d.getMonth()+1)+'/'+d.getDate()+'：'+v.n+'問中'+v.c+'問正解"><i class="bc" style="height:'+(v.c/max*100)+'%"></i><i class="bw" style="height:'+((v.n-v.c)/max*100)+'%"></i></div>').join("")+
-    '</div><div class="barlbl">'+list.map(([d])=>'<span>'+d.getDate()+'</span>').join("")+'</div>'+
-    '<div class="legend"><span><i style="background:var(--ok)"></i>正解</span><span><i style="background:var(--stop);opacity:.75"></i>不正解</span><span>縦軸の上限 '+max+'問</span></div></div>';
-  // per section
-  const agg={};Object.keys(SECS).forEach(k=>agg[k]={n:0,c:0});
-  Object.entries(REC.hist).forEach(([k,v])=>{const d=D[+k.split(":")[1]];if(d&&agg[d.sec]){agg[d.sec].n+=v.n;agg[d.sec].c+=v.c;}});
-  h+='<div><h2>分野別の正答率</h2>'+Object.entries(SECS).map(([k,l])=>{const a=agg[k];return '<div class="secrow"><span>'+l+'</span><span class="meter"><i style="width:'+(a.n?a.c/a.n*100:0)+'%"></i></span><span class="num">'+(a.n?pct(a.c,a.n)+'・'+a.n+'問':'未回答')+'</span></div>'}).join("")+'</div>';
-  // weakest
-  const weak=Object.entries(REC.hist).filter(([k,v])=>v.n-v.c>0&&D[+k.split(":")[1]])
-    .sort((a,b)=>((b[1].n-b[1].c)/b[1].n-(a[1].n-a[1].c)/a[1].n)||((b[1].n-b[1].c)-(a[1].n-a[1].c))).slice(0,10);
-  h+='<div><h2>苦手な問題 トップ10</h2>'+(weak.length?weak.map(([k,v])=>{const [m,id]=k.split(":");const d=D[+id];
-    return '<div class="weakli"><span class="m">'+(MODE_SHORT[m]||m)+'｜'+SECS[d.sec]+'</span><span>'+esc(d.cond)+' ⇔ '+esc(d.target)+'</span><span class="x">'+v.n+'回中'+(v.n-v.c)+'回ミス（最終 '+(v.last||"–")+'）</span></div>'}).join("")
-    :'<p class="note">まだ間違えた問題はありません。</p>')+'</div>';
-  document.getElementById("rec-body").innerHTML=h;
-}
-const recmsg=t=>{document.getElementById("recmsg").textContent=t;};
-document.getElementById("exp").addEventListener("click",()=>{
-  try{
-    save();
-    const blob=new Blob([JSON.stringify(REC,null,1)],{type:"application/json"});
-    const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="tohankinki-record-"+today()+".json";
-    document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),2000);
-    recmsg("書き出しました");
-  }catch(e){recmsg("書き出せませんでした");}
-});
-document.getElementById("imp").addEventListener("click",()=>document.getElementById("impfile").click());
-document.getElementById("impfile").addEventListener("change",e=>{
-  const f=e.target.files[0];if(!f)return;
-  const r=new FileReader();
-  r.onload=()=>{
-    try{const j=JSON.parse(r.result);if(!j||j.app!=="tohankinki-drill")throw 0;
-      REC=normRec(j);miss=new Set(REC.miss);save();stats();renderRec();S.queue=[];next();recmsg("読み込みました（"+REC.total.n+"問分）");}
-    catch(err){recmsg("このファイルは読み込めません。書き出した .json を選んでください");}
-    e.target.value="";
-  };
-  r.readAsText(f);
-});
-let resetArmed=false;
-document.getElementById("reset").addEventListener("click",ev=>{
-  const b=ev.currentTarget;
-  if(!resetArmed){resetArmed=true;b.classList.add("go");b.textContent="本当に消す（もう一度押す）";setTimeout(()=>{resetArmed=false;b.classList.remove("go");b.textContent="記録をリセット";},4000);return;}
-  const snd=REC.sound;REC=blankRec();REC.sound=snd;miss=new Set();save();
-  resetArmed=false;b.classList.remove("go");b.textContent="記録をリセット";
-  S.n=0;S.c=0;stats();renderRec();recmsg("記録をリセットしました");
-});
-
-// list
+// ---------- 表で読む ----------
 function renderList(){
   const q=document.getElementById("q").value.trim();
   let h="";
@@ -596,7 +660,60 @@ function renderList(){
 }
 document.getElementById("q").addEventListener("input",renderList);
 
-stats();next();renderList();
+// ---------- 記録 ----------
+function renderRec(){
+  const T=REC.total,days=Object.keys(REC.days).filter(k=>REC.days[k].n>0);
+  const td=REC.days[today()]||{n:0,c:0};
+  let h='<div><h2>これまでの記録</h2><div class="kpis">'+
+    '<div class="kpi"><span>累計回答</span><b>'+T.n+'</b></div>'+
+    '<div class="kpi"><span>累計正答率</span><b>'+pct(T.c,T.n)+'</b></div>'+
+    '<div class="kpi"><span>今日</span><b>'+td.n+'</b></div>'+
+    '<div class="kpi"><span>学習日数</span><b>'+days.length+'</b></div></div></div>';
+  const list=[];for(let i=13;i>=0;i--){const d=new Date();d.setDate(d.getDate()-i);list.push([d,REC.days[ymd(d)]||{n:0,c:0}]);}
+  const max=Math.max(10,...list.map(x=>x[1].n));
+  h+='<div><h2>直近14日</h2><div class="bars">'+list.map(([d,v])=>'<div class="bar" title="'+(d.getMonth()+1)+'/'+d.getDate()+'：'+v.n+'問中'+v.c+'問正解"><i class="bc" style="height:'+(v.c/max*100)+'%"></i><i class="bw" style="height:'+((v.n-v.c)/max*100)+'%"></i></div>').join("")+
+    '</div><div class="barlbl">'+list.map(([d])=>'<span>'+d.getDate()+'</span>').join("")+'</div>'+
+    '<div class="legend"><span><i style="background:var(--ok)"></i>正解</span><span><i style="background:var(--stop);opacity:.75"></i>不正解</span><span>縦軸の上限 '+max+'問</span></div></div>';
+  h+='<div><h2>分類別の正答率</h2>'+UNITS.filter(u=>u.filter&&!u.size).map(u=>{const s=unitStats(u);return '<div class="secrow"><span>'+u.name+'</span><span class="meter"><i style="width:'+(s.n?s.c/s.n*100:0)+'%"></i></span><span class="num">'+(s.n?pct(s.c,s.n)+'・'+s.n+'回':'未回答')+'</span></div>'}).join("")+'</div>';
+  const weak=Object.entries(REC.hist).filter(([k,v])=>v.n-v.c>0&&D[+k.split(":")[1]]&&MODES[k.split(":")[0]])
+    .sort((a,b)=>((b[1].n-b[1].c)/b[1].n-(a[1].n-a[1].c)/a[1].n)||((b[1].n-b[1].c)-(a[1].n-a[1].c))).slice(0,10);
+  h+='<div><h2>苦手な問題 トップ10</h2>'+(weak.length?weak.map(([k,v])=>{const [m,id]=k.split(":");const d=D[+id];
+    return '<div class="weakli"><span class="m">'+MODES[m].short+'｜'+SECS[d.sec]+'</span><span>'+esc(d.cond)+' ⇔ '+esc(d.target)+'</span><span class="x">'+v.n+'回中'+(v.n-v.c)+'回ミス（最終 '+(v.last||"–")+'）</span></div>'}).join("")
+    :'<p class="note">まだ間違えた問題はありません。</p>')+'</div>';
+  document.getElementById("rec-body").innerHTML=h;
+}
+const recmsg=t=>{document.getElementById("recmsg").textContent=t;};
+document.getElementById("exp").addEventListener("click",()=>{
+  try{
+    save();
+    const blob=new Blob([JSON.stringify(REC,null,1)],{type:"application/json"});
+    const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="tohankinki-record-"+today()+".json";
+    document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),2000);
+    recmsg("書き出しました");
+  }catch(e){recmsg("書き出せませんでした");}
+});
+document.getElementById("imp").addEventListener("click",()=>document.getElementById("impfile").click());
+document.getElementById("impfile").addEventListener("change",e=>{
+  const f=e.target.files[0];if(!f)return;
+  const r=new FileReader();
+  r.onload=()=>{
+    try{const j=JSON.parse(r.result);if(!j||j.app!=="tohankinki-drill")throw 0;
+      REC=normRec(j);miss=new Set(REC.miss);save();syncSoundBtn();renderRec();recmsg("読み込みました（"+REC.total.n+"問分）");}
+    catch(err){recmsg("このファイルは読み込めません。書き出した .json を選んでください");}
+    e.target.value="";
+  };
+  r.readAsText(f);
+});
+let resetArmed=false;
+document.getElementById("reset").addEventListener("click",ev=>{
+  const b=ev.currentTarget;
+  if(!resetArmed){resetArmed=true;b.classList.add("go");b.textContent="本当に消す（もう一度押す）";setTimeout(()=>{resetArmed=false;b.classList.remove("go");b.textContent="記録をリセット";},4000);return;}
+  const snd=REC.sound;REC=blankRec();REC.sound=snd;miss=new Set();save();
+  resetArmed=false;b.classList.remove("go");b.textContent="記録をリセット";
+  renderRec();recmsg("記録をリセットしました");
+});
+
+syncSoundBtn();renderList();route();
 </script>
 </body>
 </html>
