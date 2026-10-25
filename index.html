@@ -374,12 +374,23 @@ function tone(f,t,dur,type,vol,hold){
   else g.gain.exponentialRampToValueAtTime(0.0001,t+dur);
   o.connect(g).connect(AC.destination);o.start(t);o.stop(t+dur+0.05);
 }
+function unlockAudio(){
+  try{
+    // iPhone: let sound play even when the ringer switch is on silent (iOS 17+)
+    if(navigator.audioSession)navigator.audioSession.type="playback";
+    AC=AC||new (window.AudioContext||window.webkitAudioContext)();
+    if(AC.state!=="running")AC.resume();
+    // play one silent sample inside the gesture so iOS/Safari actually opens the output
+    const b=AC.createBuffer(1,1,22050),s=AC.createBufferSource();s.buffer=b;s.connect(AC.destination);s.start(0);
+  }catch(e){}
+}
+["pointerdown","touchend","keydown"].forEach(ev=>document.addEventListener(ev,()=>{if(REC.sound)unlockAudio();},{capture:true,passive:true}));
 function sfx(ok){
   if(!REC.sound)return;
   try{
-    AC=AC||new (window.AudioContext||window.webkitAudioContext)();
-    if(AC.state==="suspended")AC.resume();
-    const t=AC.currentTime+0.02;
+    if(!AC||AC.state!=="running")unlockAudio();
+    if(!AC)return;
+    const t=AC.currentTime+0.03;
     if(ok){tone(988,t,0.14,"sine",0.3);tone(1319,t+0.12,0.5,"sine",0.3);tone(2638,t+0.12,0.3,"sine",0.05);}   // ピローン
     else{tone(150,t,0.2,"square",0.1,true);tone(150,t+0.27,0.42,"square",0.1,true);}                          // ブッブー
   }catch(e){}
