@@ -33,6 +33,8 @@ h1{font-family:var(--display);font-weight:900;font-size:clamp(1.5rem,5vw,2rem);l
 .mark{flex:none;width:1.1em;height:1.1em;border:3px solid var(--stop);border-radius:50%;position:relative}
 .mark::after{content:"";position:absolute;left:50%;top:-8%;width:3px;height:116%;background:var(--stop);transform:translateX(-50%) rotate(45deg)}
 .sub{color:var(--muted);font-size:.85rem;margin:0}
+.xlink{color:var(--stop);font-weight:700;text-decoration:none}
+.xlink:hover{text-decoration:underline}
 .tabs{display:flex;gap:6px;border-bottom:1px solid var(--rule)}
 .tab{font:700 .95rem var(--display);background:none;border:0;color:var(--muted);padding:8px 14px;border-bottom:3px solid transparent;cursor:pointer}
 .tab[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--stop)}
@@ -160,6 +162,7 @@ footer a{color:inherit}
       </div>
     </div>
     <p class="sub">登録販売者・手引き 別表5-1「してはいけないこと」を集中的に覚える</p>
+    <p class="sub"><a class="xlink" href="seibun.html">成分カード（第3章の成分・生薬・漢方 350枚）へ →</a></p>
   </header>
 
   <div class="tabs" role="tablist">
