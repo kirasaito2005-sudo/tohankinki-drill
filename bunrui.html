@@ -147,6 +147,7 @@ table.items th {
 table.items td { padding: 10px 16px; vertical-align: top; border-bottom: 1px solid var(--line-soft); line-height: 1.65; }
 table.items tr:last-child td { border-bottom: 0; }
 td.n { font-weight: 700; width: 28%; }
+td.n .yomi { display: block; font-weight: 400; font-size: 12px; color: var(--muted); letter-spacing: .02em; }
 td.e { width: 38%; }
 td.c { color: var(--warn); font-size: 13px; }
 td.c strong { font-weight: 700; text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 3px; }
@@ -1344,6 +1345,7 @@ DATA.push(
     set(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
   };
 
+  const YOMI = {"芍薬甘草湯": "しゃくやくかんぞうとう", "桂枝加朮附湯": "けいしかじゅつぶとう", "桂枝加苓朮附湯": "けいしかりょうじゅつぶとう", "薏苡仁湯": "よくいにんとう", "麻杏薏甘湯": "まきょうよくかんとう", "疎経活血湯": "そけいかっけつとう", "当帰四逆加呉茱萸生姜湯": "とうきしぎゃくかごしゅゆしょうきょうとう", "釣藤散": "ちょうとうさん", "呉茱萸湯": "ごしゅゆとう", "葛根湯": "かっこんとう", "麻黄湯": "まおうとう", "小柴胡湯": "しょうさいことう", "柴胡桂枝湯": "さいこけいしとう", "小青竜湯": "しょうせいりゅうとう", "桂枝湯": "けいしとう", "香蘇散": "こうそさん", "酸棗仁湯": "さんそうにんとう", "加味帰脾湯": "かみきひとう", "抑肝散": "よくかんさん", "抑肝散加陳皮半夏": "よくかんさんかちんぴはんげ", "柴胡加竜骨牡蛎湯": "さいこかりゅうこつぼれいとう", "桂枝加竜骨牡蛎湯": "けいしかりゅうこつぼれいとう", "小建中湯": "しょうけんちゅうとう", "甘草湯": "かんぞうとう", "半夏厚朴湯": "はんげこうぼくとう", "柴朴湯": "さいぼくとう", "麦門冬湯": "ばくもんどうとう", "五虎湯": "ごことう", "麻杏甘石湯": "まきょうかんせきとう", "神秘湯": "しんぴとう", "桔梗湯": "ききょうとう", "白虎加人参湯": "びゃっこかにんじんとう", "響声破笛丸": "きょうせいはてきがん", "安中散": "あんちゅうさん", "人参湯（理中丸）": "にんじんとう（りちゅうがん）", "平胃散": "へいいさん", "六君子湯": "りっくんしとう", "桂枝加芍薬湯": "けいしかしゃくやくとう", "大黄甘草湯": "だいおうかんぞうとう", "大黄牡丹皮湯": "だいおうぼたんぴとう", "麻子仁丸": "ましにんがん", "苓桂朮甘湯": "りょうけいじゅつかんとう", "三黄瀉心湯": "さんおうしゃしんとう", "七物降下湯": "しちもつこうかとう", "乙字湯": "おつじとう", "芎帰膠艾湯": "きゅうききょうがいとう", "牛車腎気丸": "ごしゃじんきがん", "八味地黄丸": "はちみじおうがん", "六味丸": "ろくみがん", "猪苓湯": "ちょれいとう", "竜胆瀉肝湯": "りゅうたんしゃかんとう", "温経湯": "うんけいとう", "温清飲": "うんせいいん", "加味逍遙散": "かみしょうようさん", "桂枝茯苓丸": "けいしぶくりょうがん", "五積散": "ごしゃくさん", "柴胡桂枝乾姜湯": "さいこけいしかんきょうとう", "四物湯": "しもつとう", "桃核承気湯": "とうかくじょうきとう", "当帰芍薬散": "とうきしゃくやくさん", "茵蔯蒿湯": "いんちんこうとう", "十味敗毒湯": "じゅうみはいどくとう", "消風散": "しょうふうさん", "当帰飲子": "とうきいんし", "葛根湯加川芎辛夷": "かっこんとうかせんきゅうしんい", "荊芥連翹湯": "けいがいれんぎょうとう", "辛夷清肺湯": "しんいせいはいとう", "紫雲膏": "しうんこう", "中黄膏": "ちゅうおうこう", "十全大補湯": "じゅうぜんたいほとう", "補中益気湯": "ほちゅうえっきとう", "黄連解毒湯": "おうれんげどくとう", "防已黄耆湯": "ぼういおうぎとう", "防風通聖散": "ぼうふうつうしょうさん", "大柴胡湯": "だいさいことう", "清上防風湯": "せいじょうぼうふうとう", "茵蔯蒿湯（口内炎）": "いんちんこうとう", "駆風解毒散": "くふうげどくさん", "駆風解毒湯": "くふうげどくとう"};
   const countItems = g => g.classes.reduce((a, c) => a + c.items.length, 0);
 
   // ---- normalise for search (全角英数・カナ揺れを軽く吸収) ----
@@ -1396,9 +1398,13 @@ DATA.push(
     $("#gsel").addEventListener("change", e => selectGroup(e.target.value, true));
   }
 
-  function rowsHTML(items, q) {
+  const yomiHTML = n => {
+    const ys = n.split("、").map(x => YOMI[x.trim()]).filter(Boolean);
+    return ys.length ? `<span class="yomi">${esc(ys.join("、"))}</span>` : "";
+  };
+  function rowsHTML(items, q, kanpo) {
     return items.map(([n, e, c]) =>
-      `<tr><td class="n">${highlight(n, q)}</td><td class="e">${highlight(e, q)}</td><td class="c">${c ? caution(c, q) : ""}</td></tr>`
+      `<tr><td class="n">${highlight(n, q)}${kanpo ? yomiHTML(n) : ""}</td><td class="e">${highlight(e, q)}</td><td class="c">${c ? caution(c, q) : ""}</td></tr>`
     ).join("");
   }
   function clsHTML(c, q, opts = {}) {
@@ -1412,7 +1418,7 @@ DATA.push(
       </div>
       <table class="items">
         <thead><tr><th>成分名</th><th>はたらき・効能</th><th class="c">主な注意点</th></tr></thead>
-        <tbody>${rowsHTML(c.items, q)}</tbody>
+        <tbody>${rowsHTML(c.items, q, /^漢方/.test(c.cls))}</tbody>
       </table>
     </section>`;
   }
