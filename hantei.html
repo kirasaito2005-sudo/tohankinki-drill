@@ -119,6 +119,36 @@ mark{background:var(--accent-soft);color:inherit;padding:0 1px;border-radius:2px
   body{padding-bottom:calc(84px + env(safe-area-inset-bottom,0px))}
   .results{scroll-margin-top:12px}
 }
+
+/* 成分カード連携 */
+button.it.link{font:inherit;font-size:13.5px;color:inherit;cursor:pointer;text-align:left;text-decoration:underline;text-decoration-style:dotted;text-underline-offset:3px;text-decoration-color:var(--muted)}
+button.it.link::after{content:"›";margin-left:5px;color:var(--accent);font-weight:700;text-decoration:none;display:inline-block}
+button.it.link:hover{border-color:var(--accent)}
+button.it.link:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+table.agg button.alink{font:inherit;background:none;border:0;padding:0;color:inherit;text-align:left;cursor:pointer;text-decoration:underline;text-decoration-style:dotted;text-underline-offset:3px;text-decoration-color:var(--muted)}
+table.agg button.alink::after{content:"›";margin-left:5px;color:var(--accent);font-weight:700;display:inline-block}
+.hintline{font-size:12px;color:var(--muted)}
+.sheet-bg{position:fixed;inset:0;z-index:40;background:rgba(10,16,20,.45);display:flex;align-items:flex-end;justify-content:center}
+@media (min-width:720px){.sheet-bg{align-items:center;padding:24px}}
+.sheet{background:var(--card);color:var(--ink);width:100%;max-width:640px;max-height:min(82vh,820px);display:flex;flex-direction:column;border-radius:14px 14px 0 0;box-shadow:0 -6px 30px rgba(0,0,0,.25)}
+@media (min-width:720px){.sheet{border-radius:10px}}
+.sheet-h{display:flex;align-items:flex-start;gap:10px;padding:14px 16px 10px;border-bottom:1px solid var(--line)}
+.sheet-h .ttl{flex:1;min-width:0}
+.sheet-h .ttl small{display:block;font-size:11.5px;color:var(--muted)}
+.sheet-h .ttl b{font-size:15px;line-height:1.45;display:block}
+.sheet-h button{font:inherit;font-size:13px;background:var(--soft);border:1px solid var(--line);color:var(--ink);border-radius:999px;padding:4px 12px;cursor:pointer;flex:none}
+.sheet-b{overflow-y:auto;padding:4px 16px calc(16px + env(safe-area-inset-bottom,0px));display:flex;flex-direction:column}
+.scard{padding:14px 0;border-bottom:1px solid var(--line);display:flex;flex-direction:column;gap:6px}
+.scard:last-child{border-bottom:0}
+.scard .nm{font-weight:700;font-size:16px;line-height:1.4}
+.scard .nm .yomi{font-weight:400;font-size:12px;color:var(--muted);margin-left:6px}
+.scard .meta{display:flex;flex-wrap:wrap;gap:6px;font-size:11.5px}
+.scard .meta span{background:var(--accent-soft);border-radius:3px;padding:0 7px}
+.scard dl{margin:0;display:grid;grid-template-columns:4.5em minmax(0,1fr);gap:4px 10px;font-size:13.5px}
+.scard dt{color:var(--muted);font-weight:700;font-size:12px;padding-top:2px}
+.scard dd{margin:0}
+.scard dd.warn{color:var(--ink);background:var(--sd-bg);border-left:3px solid var(--sd);padding:4px 8px;border-radius:0 3px 3px 0}
+.sheet-f{font-size:11px;color:var(--muted);padding-top:10px}
 footer{font-size:12px;color:var(--muted);border-top:1px solid var(--line);padding-top:12px;display:flex;flex-direction:column;gap:4px}
 @media (prefers-reduced-motion:no-preference){.rule,.agg tr{animation:fi .18s ease-out}@keyframes fi{from{opacity:.4}to{opacity:1}}}
 </style>
@@ -161,12 +191,15 @@ footer{font-size:12px;color:var(--muted);border-top:1px solid var(--line);paddin
 
   <div class="jump" id="jump" hidden><div class="sum" id="jump-sum"></div><button id="jump-btn">結果を見る ↓</button></div>
 
+  <div class="sheet-bg" id="sheet" hidden><div class="sheet" role="dialog" aria-modal="true" aria-labelledby="sheet-ttl"><div class="sheet-h"><div class="ttl"><small>成分カード</small><b id="sheet-ttl"></b></div><button id="sheet-x">閉じる</button></div><div class="sheet-b" id="sheet-b"></div></div></div>
+
   <footer>
     <div>出典：厚生労働省「試験問題の作成に関する手引き（令和8年4月一部改訂）」第5章 別表5-1「してはいけないこと」・5-2「相談すること」（pp.401–411）、第3章 各薬効群の【相互作用】。各カードのページ番号は手引きの印刷ページ。</div>
     <div>手引きの別表は「主な」成分・薬効群の例示です。実際の販売時は製品の添付文書を必ず確認してください。学習用ツールです。</div>
   </footer>
 </div>
 
+<script src="seibun-data.js"></script>
 <script>
 /* ===== 選択肢（チップ） ===== */
 const GROUPS = [
@@ -446,6 +479,48 @@ const LV={ng:'使用しないこと',sd:'相談すること',ct:'併用に注意
 const badge=lv=>`<span class="badge b-${lv}">${LV[lv]}</span>`;
 const srcText=r=>`手引き 別表${r.src}（p.${r.p}）`;
 
+/* ===== 成分カード連携（成分カード seibun.html のデータ） ===== */
+const SEIBUN = (typeof D!=='undefined' && Array.isArray(D)) ? D : [];  // seibun-data.js
+const S_STOP = new Set(['外用','点眼','点鼻','浣腸薬','消毒薬','口内炎','内服','DSS']);
+const S_TOK = [];
+SEIBUN.forEach((c,ci)=>c.n.replace(/[（(]/g,'・').replace(/[）)]/g,'').split(/[・、／\/]/).map(x=>x.trim())
+  .filter(x=>x.length>=2 && !S_STOP.has(x) && !x.includes('等')).forEach(t=>S_TOK.push({t,ci})));
+const S_ALIAS = [ {re:/ステロイド性抗炎症成分|副腎皮質ホルモン/, pick:c=>c.k==='ステロイド性抗炎症成分'} ];
+const WORDCH=/[\u30A1-\u30FC\u4E00-\u9FFF]/, KATA=/[\u30A1-\u30FC]/;
+const S_CACHE = new Map();
+function cardsFor(item){
+  if(S_CACHE.has(item)) return S_CACHE.get(item);
+  const m=[];
+  S_TOK.forEach(({t,ci})=>{ let i=item.indexOf(t);
+    while(i>=0){ const pv=item[i-1], nx=item[i+t.length];
+      if(!(pv&&WORDCH.test(pv)) && !(nx&&KATA.test(nx))) m.push({s:i,e:i+t.length,ci});
+      i=item.indexOf(t,i+1); } });
+  if(!m.length && item.length>=4) S_TOK.forEach(({t,ci})=>{ if(t.startsWith(item)) m.push({s:0,e:item.length,ci}); });
+  const keep=m.filter(a=>!m.some(b=>b.ci!==a.ci && b.s<=a.s && b.e>=a.e && (b.e-b.s)>(a.e-a.s)));
+  const seen=new Set(), out=[];
+  keep.sort((a,b)=>a.s-b.s).forEach(x=>{ if(!seen.has(x.ci)){seen.add(x.ci); out.push(x.ci);} });
+  S_ALIAS.forEach(a=>{ if(a.re.test(item)) SEIBUN.forEach((c,ci)=>{ if(a.pick(c)&&!seen.has(ci)){seen.add(ci);out.push(ci);} }); });
+  S_CACHE.set(item,out); return out;
+}
+function itemHTML(i,inner){ inner=inner??esc(i); return cardsFor(i).length?`<button class="it link" data-it="${esc(i)}">${inner}</button>`:`<span class="it">${inner}</span>`; }
+let sheetReturn=null;
+function openSheet(item){
+  const cs=cardsFor(item); if(!cs.length) return;
+  sheetReturn=document.activeElement;
+  $('#sheet-ttl').textContent=item;
+  $('#sheet-b').innerHTML=cs.map(ci=>{const c=SEIBUN[ci]; return `<div class="scard"><div class="nm">${esc(c.n)}${c.y?`<span class="yomi">${esc(c.y)}</span>`:''}</div>
+    <div class="meta"><span>${esc(c.t)}</span><span>${esc(c.g)}</span></div>
+    <dl>${c.k?`<dt>分類</dt><dd>${esc(c.k)}</dd>`:''}${c.e?`<dt>${c.t==='漢方'?'適応':'作用'}</dt><dd>${esc(c.e)}</dd>`:''}${c.w?`<dt>${c.t==='漢方'?'構成':'配合先'}</dt><dd>${esc(c.w)}</dd>`:''}${c.x?`<dt>注意</dt><dd class="warn">${esc(c.x)}</dd>`:''}</dl></div>`;}).join('')
+    + `<div class="sheet-f">成分カード（手引き第3章の要約）より。${cs.length>1?'この項目に含まれる成分をまとめて表示しています。':''}</div>`;
+  $('#sheet').hidden=false; $('#sheet-b').scrollTop=0; $('#sheet-x').focus();
+}
+function closeSheet(){ $('#sheet').hidden=true; if(sheetReturn&&document.contains(sheetReturn)) sheetReturn.focus(); }
+document.addEventListener('click',e=>{
+  const b=e.target.closest('[data-it]'); if(b){ openSheet(b.dataset.it); return; }
+  if(e.target.id==='sheet'||e.target.id==='sheet-x') closeSheet();
+});
+document.addEventListener('keydown',e=>{ if(e.key==='Escape'&&!$('#sheet').hidden) closeSheet(); });
+
 /* ===== Tab 1: 条件から探す ===== */
 const sel = new Set(['glaucoma']); let age = null;
 function renderPicker(){
@@ -470,7 +545,7 @@ function ruleHits(r){
 function ruleCard(r,h,showVia=true){
   return `<div class="rule"><div class="cond">「${esc(r.cond)}」</div>
    ${showVia&&h?`<div class="via">該当：${h.via.map(v=>`<span class="tag">${esc(v)}</span>`).join('')}${h.note?`<span class="note">${esc(h.note)}</span>`:''}</div>`:''}
-   <div class="items">${r.it.map(i=>`<span class="it">${esc(i)}</span>`).join('')}</div>
+   <div class="items">${r.it.map(i=>itemHTML(i)).join('')}</div>
    <div class="why">${esc(r.why)}</div><div class="src">${srcText(r)}</div></div>`;
 }
 function renderCond(){
@@ -488,8 +563,8 @@ function renderCond(){
   }));
   const rows=[...agg.entries()].sort((a,b)=>(a[1].lv===b[1].lv?0:a[1].lv==='ng'?-1:1));
   html+=`<div class="count"><span>${badge('ng')} <b>${ng.length}</b>項目</span><span>${badge('sd')} <b>${sd.length}</b>項目</span><span class="lab">／該当する成分・製品 <b>${rows.length}</b></span></div>`;
-  html+=`<h2 class="sec-title">該当する成分・製品の一覧</h2><div class="tblwrap"><table class="agg"><thead><tr><th>区分</th><th>成分・薬効群</th><th>該当した条件</th></tr></thead><tbody>${
-    rows.map(([k,v])=>`<tr><td class="lv">${badge(v.lv)}</td><td>${esc(k)}</td><td class="vc">${[...v.via].map(esc).join('、')}${v.note?`<br><span class="note">${esc(v.note)}</span>`:''}</td></tr>`).join('')}</tbody></table></div>`;
+  html+=`<h2 class="sec-title">該当する成分・製品の一覧</h2><p class="hintline" style="margin:-10px 0 0">› の付いた成分を押すと、成分カード（作用・配合先・注意）が開きます。</p><div class="tblwrap"><table class="agg"><thead><tr><th>区分</th><th>成分・薬効群</th><th>該当した条件</th></tr></thead><tbody>${
+    rows.map(([k,v])=>`<tr><td class="lv">${badge(v.lv)}</td><td>${cardsFor(k).length?`<button class="alink" data-it="${esc(k)}">${esc(k)}</button>`:esc(k)}</td><td class="vc">${[...v.via].map(esc).join('、')}${v.note?`<br><span class="note">${esc(v.note)}</span>`:''}</td></tr>`).join('')}</tbody></table></div>`;
   if(ng.length) html+=`<div class="box ng"><h2>してはいけないこと <span>次の人は使用（服用）しないこと 等</span></h2>${ng.map(x=>ruleCard(x.r,x.h)).join('')}</div>`;
   if(sd.length) html+=`<div class="box sd"><h2>相談すること <span>使用前に医師・薬剤師・登録販売者に相談</span></h2>${sd.map(x=>ruleCard(x.r,x.h)).join('')}</div>`;
   $('#cond-out').innerHTML=html;
@@ -525,7 +600,7 @@ function renderIngr(){
   const total=direct.length+viaClass.length+inter.length;
   if(!total){ $('#ingr-out').innerHTML=html+`<div class="empty">「${esc(q)}」を含む記載は別表・相互作用データにありません。表記ゆれ（塩酸塩などを省く）を試してください。</div>`; return; }
   const ng=direct.filter(r=>r.lv==='ng'), sd=direct.filter(r=>r.lv==='sd');
-  const card=(r,terms,extra='')=>`<div class="rule">${extra}<div class="cond">「${esc(r.cond)}」</div>${r.c||r.age?`<div class="via">対象：${[...(r.c||[]).map(x=>CHIP[x].label),...(r.age?[AGE_LABEL[r.age]]:[])].map(v=>`<span class="tag">${esc(v)}</span>`).join('')}</div>`:''}<div class="items">${r.it.map(i=>`<span class="it">${hl(i,terms)}</span>`).join('')}</div><div class="why">${esc(r.why)}</div><div class="src">${srcText(r)}</div></div>`;
+  const card=(r,terms,extra='')=>`<div class="rule">${extra}<div class="cond">「${esc(r.cond)}」</div>${r.c||r.age?`<div class="via">対象：${[...(r.c||[]).map(x=>CHIP[x].label),...(r.age?[AGE_LABEL[r.age]]:[])].map(v=>`<span class="tag">${esc(v)}</span>`).join('')}</div>`:''}<div class="items">${r.it.map(i=>itemHTML(i,hl(i,terms))).join('')}</div><div class="why">${esc(r.why)}</div><div class="src">${srcText(r)}</div></div>`;
   html+=`<div class="count"><span>${badge('ng')} <b>${ng.length+viaClass.filter(x=>x.r.lv==='ng').length}</b></span><span>${badge('sd')} <b>${sd.length+viaClass.filter(x=>x.r.lv==='sd').length}</b></span><span>${badge('ct')} <b>${inter.length}</b></span></div>`;
   if(ng.length) html+=`<div class="box ng"><h2>してはいけないこと</h2>${ng.map(r=>card(r,[q])).join('')}</div>`;
   if(sd.length) html+=`<div class="box sd"><h2>相談すること</h2>${sd.map(r=>card(r,[q])).join('')}</div>`;
