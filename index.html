@@ -8,19 +8,19 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=BIZ+UDPGothic:wght@400;700&family=Zen+Kaku+Gothic+Antique:wght@700;900&display=swap">
 <style>
-/* Layout: one narrow column, three large stacked buttons — one per study page */
+/* Layout: one narrow column, four large stacked buttons — one per study page */
 :root{
   --paper:#f5f7f6; --sheet:#ffffff; --ink:#1d2a2f; --muted:#5d6b70; --rule:#cfd8d6;
-  --c-kinki:#b3261e; --c-seibun:#0e6a55; --c-ranyou:#1f4e8c;
+  --c-kinki:#b3261e; --c-seibun:#0e6a55; --c-ranyou:#1f4e8c; --c-hantei:#9a5d00;
   --display:"Zen Kaku Gothic Antique","Hiragino Sans","Yu Gothic",sans-serif;
   --body:"BIZ UDPGothic","Hiragino Sans","Yu Gothic","Meiryo",sans-serif;
 }
 @media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
   --paper:#141a1c; --sheet:#1c2427; --ink:#e4ebe9; --muted:#9aa8a6; --rule:#33403f;
-  --c-kinki:#ff8a80; --c-seibun:#4fbf9c; --c-ranyou:#8fb4ee; color-scheme:dark}}
+  --c-kinki:#ff8a80; --c-seibun:#4fbf9c; --c-ranyou:#8fb4ee; --c-hantei:#f0b54e; color-scheme:dark}}
 :root[data-theme="dark"]{
   --paper:#141a1c; --sheet:#1c2427; --ink:#e4ebe9; --muted:#9aa8a6; --rule:#33403f;
-  --c-kinki:#ff8a80; --c-seibun:#4fbf9c; --c-ranyou:#8fb4ee; color-scheme:dark}
+  --c-kinki:#ff8a80; --c-seibun:#4fbf9c; --c-ranyou:#8fb4ee; --c-hantei:#f0b54e; color-scheme:dark}
 *{box-sizing:border-box}
 html{-webkit-text-size-adjust:100%}
 body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--body);font-size:15px;line-height:1.7;
@@ -36,7 +36,7 @@ a.go:hover{transform:translateY(-2px);border-color:var(--c)}
 a.go:focus-visible{outline:3px solid var(--c);outline-offset:3px}
 a.go .t{flex:1;min-width:0;font-family:var(--display);font-weight:700;font-size:1.3rem;line-height:1.35}
 a.go .arrow{color:var(--c);font-size:1.4rem;font-weight:700}
-.kinki{--c:var(--c-kinki)} .seibun{--c:var(--c-seibun)} .ranyou{--c:var(--c-ranyou)}
+.kinki{--c:var(--c-kinki)} .seibun{--c:var(--c-seibun)} .ranyou{--c:var(--c-ranyou)} .hantei{--c:var(--c-hantei)}
 @media (prefers-reduced-motion:reduce){a.go{transition:none}a.go:hover{transform:none}}
 </style>
 </head>
@@ -47,6 +47,7 @@ a.go .arrow{color:var(--c);font-size:1.4rem;font-weight:700}
     <a class="go kinki" href="kinki.html"><span class="t">してはいけないことドリル</span><span class="arrow" aria-hidden="true">→</span></a>
     <a class="go seibun" href="seibun.html"><span class="t">成分カード</span><span class="arrow" aria-hidden="true">→</span></a>
     <a class="go ranyou" href="ranyou.html"><span class="t">濫用防止8成分ドリル</span><span class="arrow" aria-hidden="true">→</span></a>
+    <a class="go hantei" href="hantei.html"><span class="t">禁忌チェッカー</span><span class="arrow" aria-hidden="true">→</span></a>
   </nav>
 </div>
 </body>
