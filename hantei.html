@@ -1,0 +1,566 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>登販 禁忌チェッカー</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=BIZ+UDPGothic:wght@400;700&family=BIZ+UDPMincho:wght@700&display=swap">
+<style>
+/* Layout: 添付文書の「使用上の注意」枠を下敷きに、左で条件を選び右に該当成分が並ぶ2ペイン（狭い画面では縦積み） */
+:root{
+  --paper:#f5f6f3; --card:#ffffff; --ink:#1c2731; --muted:#5a6670; --line:#d5dad5; --soft:#eceee9;
+  --accent:#1d6b58; --accent-ink:#ffffff; --accent-soft:#e1efe9;
+  --ng:#b8142c; --ng-bg:#fbe9ec; --ng-line:#e8b4bd;
+  --sd:#9a5d00; --sd-bg:#fbf1dc; --sd-line:#e8cf9c;
+  --ct:#2d5a86; --ct-bg:#e7eef6; --ct-line:#b9cde2;
+  --f-body:"BIZ UDPGothic","Hiragino Sans","Yu Gothic UI","Noto Sans JP",sans-serif;
+  --f-disp:"BIZ UDPMincho","Hiragino Mincho ProN","Yu Mincho",serif;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --paper:#121618; --card:#1a2024; --ink:#e4e9ec; --muted:#98a4ac; --line:#2d363c; --soft:#20282d;
+  --accent:#58c2a5; --accent-ink:#0d1a16; --accent-soft:#183129;
+  --ng:#ff7487; --ng-bg:#3a1920; --ng-line:#6b2c37;
+  --sd:#f0b54e; --sd-bg:#33260e; --sd-line:#5e4718;
+  --ct:#86b6e6; --ct-bg:#162533; --ct-line:#2c4660; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --paper:#121618; --card:#1a2024; --ink:#e4e9ec; --muted:#98a4ac; --line:#2d363c; --soft:#20282d;
+  --accent:#58c2a5; --accent-ink:#0d1a16; --accent-soft:#183129;
+  --ng:#ff7487; --ng-bg:#3a1920; --ng-line:#6b2c37;
+  --sd:#f0b54e; --sd-bg:#33260e; --sd-line:#5e4718;
+  --ct:#86b6e6; --ct-bg:#162533; --ct-line:#2c4660; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--paper);color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.65;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:calc(20px + env(safe-area-inset-top,0px)) calc(48px + env(safe-area-inset-bottom,0px))}
+.wrap{max-width:1180px;margin:0 auto;display:flex;flex-direction:column;gap:18px}
+header{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:10px 24px;border-bottom:2px solid var(--ink);padding-bottom:12px}
+h1{font-family:var(--f-disp);font-size:clamp(24px,4vw,32px);margin:0;letter-spacing:.04em;line-height:1.2;text-wrap:balance}
+h1 .home{display:block;font-family:var(--f-body);font-size:13px;font-weight:700;color:var(--accent);text-decoration:none;letter-spacing:0;margin-bottom:6px}
+h1 .home:hover{text-decoration:underline}
+h1 small{display:block;font-family:var(--f-body);font-size:12px;font-weight:400;color:var(--muted);letter-spacing:.02em;margin-top:6px}
+.legend{display:flex;flex-wrap:wrap;gap:8px;font-size:12px}
+.badge{display:inline-flex;align-items:center;gap:4px;font-size:11.5px;font-weight:700;padding:1px 8px;border-radius:3px;border:1px solid;white-space:nowrap;line-height:1.7}
+.b-ng{color:var(--ng);background:var(--ng-bg);border-color:var(--ng-line)}
+.b-sd{color:var(--sd);background:var(--sd-bg);border-color:var(--sd-line)}
+.b-ct{color:var(--ct);background:var(--ct-bg);border-color:var(--ct-line)}
+nav.tabs{display:flex;gap:4px;border-bottom:1px solid var(--line);overflow-x:auto}
+nav.tabs button{font:inherit;font-weight:700;background:none;border:0;border-bottom:3px solid transparent;color:var(--muted);padding:8px 14px;cursor:pointer;white-space:nowrap}
+nav.tabs button[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--accent)}
+nav.tabs button:focus-visible,.chip:focus-visible,.btn:focus-visible,input:focus-visible,.ikey:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.pane{display:grid;grid-template-columns:minmax(0,380px) minmax(0,1fr);gap:22px;align-items:start}
+@media (max-width:860px){.pane{grid-template-columns:minmax(0,1fr)}}
+.picker{background:var(--card);border:1px solid var(--line);border-radius:6px;padding:14px;display:flex;flex-direction:column;gap:14px}
+@media (min-width:861px){.picker{position:sticky;top:12px;max-height:calc(100vh - 24px);overflow-y:auto}}
+.grp h3{font-size:12px;letter-spacing:.08em;color:var(--muted);margin:0 0 6px;font-weight:700}
+.grp .hint{font-size:11.5px;color:var(--muted);margin:-2px 0 6px}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{font:inherit;font-size:13px;background:var(--paper);color:var(--ink);border:1px solid var(--line);border-radius:999px;padding:3px 11px;cursor:pointer;line-height:1.6}
+.chip:hover{border-color:var(--accent)}
+.chip[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.btn{font:inherit;font-size:13px;background:none;border:1px solid var(--line);color:var(--ink);border-radius:4px;padding:3px 10px;cursor:pointer}
+.btn:hover{border-color:var(--accent)}
+.results{display:flex;flex-direction:column;gap:18px;min-width:0}
+.selbar{display:flex;flex-wrap:wrap;align-items:center;gap:8px;font-size:13px}
+.selbar .lab{color:var(--muted)}
+.tag{background:var(--accent-soft);color:var(--ink);border-radius:3px;padding:1px 8px;font-size:12.5px}
+.count{display:flex;flex-wrap:wrap;gap:10px;font-size:13px}
+.count b{font-variant-numeric:tabular-nums;font-size:18px;margin-right:2px}
+.empty{background:var(--card);border:1px dashed var(--line);border-radius:6px;padding:28px 20px;color:var(--muted);text-align:center}
+.sec-title{font-size:13px;font-weight:700;color:var(--muted);letter-spacing:.06em;margin:0}
+table.agg{width:100%;border-collapse:collapse;background:var(--card);border:1px solid var(--line);border-radius:6px;overflow:hidden;font-size:14px}
+table.agg th,table.agg td{text-align:left;padding:7px 10px;border-bottom:1px solid var(--line);vertical-align:top}
+table.agg th{font-size:11.5px;color:var(--muted);font-weight:700;background:var(--soft);letter-spacing:.05em}
+table.agg tr:last-child td{border-bottom:0}
+table.agg td.lv{width:1%;white-space:nowrap}
+table.agg td.vc{color:var(--muted);font-size:12.5px;min-width:9em;width:28%}
+.tblwrap{overflow-x:auto;border-radius:6px}
+.box{border:2px solid;border-radius:6px;background:var(--card);overflow:hidden}
+.box.ng{border-color:var(--ng)} .box.sd{border-color:var(--sd)} .box.ct{border-color:var(--ct)}
+.box>h2{margin:0;font-size:15px;padding:7px 14px;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.box.ng>h2{background:var(--ng);color:var(--card)} .box.sd>h2{background:var(--sd);color:var(--card)} .box.ct>h2{background:var(--ct);color:var(--card)}
+.box>h2 span{font-weight:400;font-size:12px;opacity:.9}
+.rule{padding:12px 14px;border-top:1px solid var(--line);display:flex;flex-direction:column;gap:6px}
+.box>.rule:first-of-type{border-top:0}
+.rule .cond{font-weight:700;font-size:14px}
+.rule .via{display:flex;flex-wrap:wrap;gap:4px;align-items:center;font-size:11.5px;color:var(--muted)}
+.items{display:flex;flex-wrap:wrap;gap:5px}
+.it{font-size:13.5px;padding:2px 9px;border-radius:3px;background:var(--soft);border:1px solid var(--line)}
+.box.ng .it{background:var(--ng-bg);border-color:var(--ng-line)}
+.box.sd .it{background:var(--sd-bg);border-color:var(--sd-line)}
+.box.ct .it{background:var(--ct-bg);border-color:var(--ct-line)}
+.why{font-size:13px;color:var(--muted)}
+.why::before{content:"理由　";font-weight:700;color:var(--ink)}
+.src{font-size:11px;color:var(--muted);font-variant-numeric:tabular-nums}
+.note{font-size:12px;color:var(--sd);font-weight:700}
+.search{display:flex;gap:8px;align-items:center}
+.search input{flex:1;min-width:0;font:inherit;font-size:16px;padding:8px 12px;border:1px solid var(--line);border-radius:6px;background:var(--card);color:var(--ink)}
+.keys{display:flex;flex-wrap:wrap;gap:5px;max-height:none}
+.ikey{font:inherit;font-size:12.5px;background:var(--paper);border:1px solid var(--line);color:var(--ink);border-radius:4px;padding:2px 8px;cursor:pointer}
+.ikey[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.kh{font-size:11px;color:var(--muted);margin:8px 0 4px;letter-spacing:.06em}
+mark{background:var(--accent-soft);color:inherit;padding:0 1px;border-radius:2px}
+.pair{font-weight:700;font-size:14px;display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.pair .x{color:var(--muted);font-weight:400}
+.pair .p{padding:1px 8px;border:1px solid var(--line);border-radius:3px;background:var(--paper)}
+.pair .p.on{border-color:var(--accent);background:var(--accent-soft)}
+footer{font-size:12px;color:var(--muted);border-top:1px solid var(--line);padding-top:12px;display:flex;flex-direction:column;gap:4px}
+@media (prefers-reduced-motion:no-preference){.rule,.agg tr{animation:fi .18s ease-out}@keyframes fi{from{opacity:.4}to{opacity:1}}}
+</style>
+
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1><a class="home" href="index.html">← ホーム</a>登販 禁忌チェッカー<small>試験問題の作成に関する手引き（令和8年4月一部改訂）第5章 別表5-1・5-2／第3章【相互作用】より</small></h1>
+    <div class="legend">
+      <span class="badge b-ng">使用しないこと</span>
+      <span class="badge b-sd">相談すること</span>
+      <span class="badge b-ct">併用に注意（第3章）</span>
+    </div>
+  </header>
+
+  <nav class="tabs" role="tablist">
+    <button role="tab" id="t-cond" data-tab="cond" aria-selected="true">持病・属性から探す</button>
+    <button role="tab" id="t-ingr" data-tab="ingr" aria-selected="false">成分から探す</button>
+    <button role="tab" id="t-combo" data-tab="combo" aria-selected="false">飲み合わせ</button>
+  </nav>
+
+  <section id="v-cond" class="pane">
+    <div class="picker" id="picker"></div>
+    <div class="results" id="cond-out"></div>
+  </section>
+
+  <section id="v-ingr" class="pane" hidden>
+    <div class="picker">
+      <div class="search"><input id="q" type="search" placeholder="成分名で検索（例：プソイドエフェドリン）" autocomplete="off"></div>
+      <div id="keys"></div>
+    </div>
+    <div class="results" id="ingr-out"></div>
+  </section>
+
+  <section id="v-combo" class="pane" hidden>
+    <div class="picker" id="combo-picker"></div>
+    <div class="results" id="combo-out"></div>
+  </section>
+
+  <footer>
+    <div>出典：厚生労働省「試験問題の作成に関する手引き（令和8年4月一部改訂）」第5章 別表5-1「してはいけないこと」・5-2「相談すること」（pp.401–411）、第3章 各薬効群の【相互作用】。各カードのページ番号は手引きの印刷ページ。</div>
+    <div>手引きの別表は「主な」成分・薬効群の例示です。実際の販売時は製品の添付文書を必ず確認してください。学習用ツールです。</div>
+  </footer>
+</div>
+
+<script>
+/* ===== 選択肢（チップ） ===== */
+const GROUPS = [
+  {id:'dis', title:'持病・診断', chips:[
+    ['glaucoma','緑内障'],['heart','心臓病'],['htn','高血圧'],['dm','糖尿病'],['thy','甲状腺の病気'],
+    ['gu','胃・十二指腸潰瘍'],['ibd','潰瘍性大腸炎・クローン病（既往）'],['liver','肝臓病'],['kidney','腎臓病'],['dialysis','透析を受けている'],
+    ['bph','前立腺肥大'],['epi','てんかん'],['insomnia','不眠症・日常的な不眠'],['thromb','血栓症・血栓のおそれ'],['anemia','貧血'],['sle','全身性エリテマトーデス・混合性結合組織病']]},
+  {id:'sym', title:'いまの症状・状態', chips:[
+    ['fever','発熱・高熱'],['seizure','けいれん（を起こしたことがある）'],['flu','水痘（水ぼうそう）・インフルエンザ（疑い含む）'],
+    ['dysuria','排尿困難'],['hyperacid','胃酸過多'],['abd','激しい腹痛'],['nausea','吐き気・嘔吐'],['edema','むくみ'],
+    ['diarrhea','下痢'],['sdiar','急性のはげしい下痢'],['fdiar','発熱を伴う下痢・血便・粘液便'],['anal','便秘を避けるべき肛門疾患'],['hbleed','痔出血'],
+    ['mouth','口の中の傷・ひどいただれ'],['eyepain','はげしい目の痛み']]},
+  {id:'age', title:'年齢', single:true, hint:'1つ選択（もう一度押すと解除）', chips:[
+    ['a_neo','新生児（1ヶ月未満）'],['a_inf','1ヶ月〜2歳'],['a_3','3〜5歳'],['a_6','6〜11歳'],['a_12','12〜14歳'],['a_ad','15〜64歳'],['a_el','高齢者（65歳以上）']]},
+  {id:'preg', title:'妊娠・授乳', hint:'妊娠の時期は1つ、授乳は併せて選べます', chips:[
+    ['p_early','妊娠初期（〜3ヶ月）'],['p_mid','妊娠中（3ヶ月以降）'],['p_late','出産予定日まで12週以内'],['p_plan','妊娠を希望'],['lact','授乳中']]},
+  {id:'alg', title:'アレルギー歴', chips:[
+    ['allergy','薬の成分でアレルギー'],['asthma','喘息を起こしたことがある'],['aspasthma','かぜ薬・解熱鎮痛薬で喘息'],
+    ['ketoal','チアプロフェン酸・スプロフェン・フェノフィブラートでかぶれ等'],['uvfilter','オキシベンゾン・オクトクリレン（日焼け止め等）でかぶれ等'],['milk','牛乳アレルギー']]},
+  {id:'life', title:'生活・使い方', chips:[
+    ['drive','車・機械を運転する'],['alcohol','お酒を飲む'],['caffeine','コーヒー・お茶をよく飲む'],['uv','屋外で活動する（紫外線）'],
+    ['longuse','長く使い続けたい（連用）'],['overdose','多めに使いたい（大量・過量）']]},
+  {id:'med', title:'使用中の薬・治療', chips:[
+    ['laxative','下剤（瀉下薬）を使用中'],['castor','ヒマシ油を使用中'],['anthelm','駆虫薬を使用中'],
+    ['maoi','モノアミン酸化酵素阻害剤（セレギリン等）で治療中'],['ifn','インターフェロン製剤で治療中']]},
+  {id:'site', title:'外用薬を使う部位', chips:[
+    ['s_eye','目の周囲・粘膜'],['s_soft','首まわり・顔面などやわらかい皮膚'],['s_eczema','湿疹・かぶれ・傷口'],['s_genital','陰のう・外陰部'],
+    ['s_tinea','みずむし・たむしの患部'],['pus','化膿している患部'],['s_wet','湿潤・ただれ・亀裂・ひどい外傷'],['s_infl','炎症・傷のある患部'],['s_burn','深い傷・ひどいやけど']]}
+];
+const CHIP = {}; GROUPS.forEach(g=>g.chips.forEach(([id,l])=>CHIP[id]={label:l,group:g.id}));
+const PREG_STAGE = ['p_early','p_mid','p_late','p_plan'];
+const AGES = {u15:['a_neo','a_inf','a_3','a_6','a_12'], u12:['a_neo','a_inf','a_3','a_6'], u6:['a_neo','a_inf','a_3'], u3:['a_neo','a_inf'], neo:['a_neo'], el:['a_el']};
+const AGE_LABEL = {u15:'15歳未満', u12:'12歳未満', u6:'6歳未満', u3:'3歳未満', neo:'1ヶ月未満', el:'高齢者'};
+
+/* ===== 別表データ  lv: ng=してはいけないこと / sd=相談すること ===== */
+const PREG=['p_early','p_mid','p_late'];
+const GLY='グリチルリチン酸二カリウム、グリチルレチン酸、カンゾウ等のグリチルリチン酸を含む成分（1日用量がグリチルリチン酸として40mg以上、又はカンゾウとして1g以上を含有する場合）';
+const AL='スクラルファート、水酸化アルミニウムゲル、ケイ酸アルミン酸マグネシウム、ケイ酸アルミニウム、合成ヒドロタルサイト、アルジオキサ等のアルミニウムを含む成分が配合された胃腸薬、胃腸鎮痛鎮痙薬';
+const ADR=['アドレナリン作動成分が配合された鼻炎用点鼻薬','メチルエフェドリン塩酸塩、トリメトキノール塩酸塩水和物、フェニレフリン塩酸塩、メトキシフェナミン塩酸塩等のアドレナリン作動成分','マオウ'];
+const ACH='スコポラミン臭化水素酸塩水和物、メチルオクタトロピン臭化物、イソプロパミドヨウ化物等の抗コリン成分';
+const NSAID5='アスピリン、アスピリンアルミニウム、エテンザミド、イブプロフェン、アセトアミノフェン';
+const CAF='カフェイン、無水カフェイン、カフェインクエン酸塩等のカフェインを含む成分を主薬とする眠気防止薬';
+const S1='5-1', S2='5-2';
+const RULES = [
+ // ---- 5-1 してはいけないこと：アレルギー
+ {lv:'ng',c:['allergy'],cond:'本剤又は本剤の成分によりアレルギー症状を起こしたことがある人',it:['かぜ薬、解熱鎮痛薬','デキストロメトルファン臭化水素酸塩水和物、フェノールフタリン酸デキストロメトルファン','クエン酸チペピジン、チペピジンヒベンズ酸塩','アミノフィリン水和物、テオフィリン','リドカイン、リドカイン塩酸塩','クロルフェニラミンマレイン酸塩・ベラドンナ総アルカロイド・プソイドエフェドリン塩酸塩（硫酸塩）・カフェインを含有する鼻炎用内服薬','ヨードチンキを含有するみずむし・たむし用薬','ポビドンヨードが配合された含嗽薬、口腔咽喉薬、殺菌消毒薬','ブチルスコポラミン臭化物','ロペラミド塩酸塩','メキタジン','リドカイン、リドカイン塩酸塩、アミノ安息香酸エチル、塩酸パラブチルアミノ安息香酸ジエチルアミノエチル又はジブカイン塩酸塩が配合された外用痔疾用薬（坐薬、注入軟膏）','インドメタシン、フェルビナク、ケトプロフェン又はピロキシカムが配合された外用鎮痛消炎薬'],why:'再度使用するとショック（アナフィラキシー）、皮膚粘膜眼症候群、中毒性表皮壊死融解症等の重篤なアレルギー性の副作用を生じる危険性が高まるため。',src:S1,p:401},
+ {lv:'ng',c:['asthma'],cond:'喘息を起こしたことがある人',it:['インドメタシン、フェルビナク、ケトプロフェン又はピロキシカムが配合された外用鎮痛消炎薬'],why:'喘息発作を誘発するおそれがあるため。',src:S1,p:401},
+ {lv:'ng',c:['aspasthma'],cond:'本剤又は他のかぜ薬、解熱鎮痛薬を使用（服用）して喘息を起こしたことがある人',it:['アセトアミノフェン、アスピリン、イブプロフェン、イソプロピルアンチピリン等の解熱鎮痛成分'],why:'アスピリン喘息を誘発するおそれがあるため。',src:S1,p:401},
+ {lv:'ng',c:['ketoal'],cond:'次の医薬品によるアレルギー症状（発疹・発赤、かゆみ、かぶれ等）を起こしたことがある人：チアプロフェン酸を含有する解熱鎮痛薬、スプロフェンを含有する外用鎮痛消炎薬、フェノフィブラートを含有する高脂血症治療薬',it:['ケトプロフェンが配合された外用鎮痛消炎薬'],why:'接触皮膚炎、光線過敏症を誘発するおそれがあるため。',src:S1,p:'401–402'},
+ {lv:'ng',c:['uvfilter'],cond:'次の添加物によるアレルギー症状を起こしたことがある人：オキシベンゾン、オクトクリレンを含有する製品（日焼け止め、香水等）',it:['ケトプロフェンが配合された外用鎮痛消炎薬'],why:'接触皮膚炎を誘発するおそれがあるため。',src:S1,p:402},
+ {lv:'ng',c:['milk'],cond:'本剤又は本剤の成分、牛乳によるアレルギー症状を起こしたことがある人',it:['タンニン酸アルブミン'],why:'タンニン酸アルブミンは、乳製カゼインを由来としているため。',src:S1,p:402},
+ {lv:'ng',c:['milk'],cond:'本剤又は本剤の成分、牛乳によるアレルギー症状を起こしたことがある人',it:['カゼイン、カゼインナトリウム等（添加物）'],why:'カゼインは牛乳タンパクの主成分であり、牛乳アレルギーのアレルゲンとなる可能性があるため。',src:S1,p:402},
+ // 症状・状態
+ {lv:'ng',c:['hyperacid'],cond:'次の症状がある人：胃酸過多',it:[CAF],why:'カフェインが胃液の分泌を亢進し、症状を悪化させるおそれがあるため。',src:S1,p:402},
+ {lv:'ng',c:['bph','dysuria'],cond:'次の症状がある人：前立腺肥大による排尿困難',it:['プソイドエフェドリン塩酸塩'],why:'交感神経刺激作用により、尿の貯留・尿閉を生じるおそれがあるため。',src:S1,p:402},
+ {lv:'ng',c:['abd','nausea'],cond:'次の症状がある人：激しい腹痛又は吐き気・嘔吐',it:['ヒマシ油が配合された瀉下薬'],why:'急性腹症（腸管の狭窄、閉塞、腹腔内器官の炎症等）の症状である可能性があるため。',src:S1,p:402},
+ {lv:'ng',c:['pus','flu','s_tinea'],cond:'患部が化膿している人／次の部位には使用しないこと：水痘（水ぼうそう）、みずむし・たむし等又は化膿している患部',it:['ステロイド性抗炎症成分が配合された外用薬'],why:'細菌等の感染に対する抵抗力を弱めて、感染を増悪させる可能性があるため。',src:S1,p:402},
+ {lv:'ng',c:['pus','flu','s_tinea'],cond:'次の部位には使用しないこと：水痘（水ぼうそう）、みずむし・たむし等又は化膿している患部',it:['インドメタシン、フェルビナク、ケトプロフェン又はピロキシカムが配合された外用薬'],why:'感染に対する効果はなく、逆に感染の悪化が自覚されにくくなるおそれがあるため。',src:S1,p:402},
+ // 基礎疾患
+ {lv:'ng',c:['heart'],cond:'次の診断を受けた人：心臓病',it:['プソイドエフェドリン塩酸塩','芍薬甘草湯','カフェイン、無水カフェイン、カフェインクエン酸塩等のカフェインを含む成分を主薬とする眠気防止薬'],why:'徐脈又は頻脈を引き起こし、心臓病の症状を悪化させるおそれがあるため。',src:S1,p:402},
+ {lv:'ng',c:['gu'],cond:'次の診断を受けた人：胃潰瘍',it:[CAF],why:'胃液の分泌が亢進し、胃潰瘍の症状を悪化させるおそれがあるため。',src:S1,p:402},
+ {lv:'ng',c:['htn'],cond:'次の診断を受けた人：高血圧',it:['プソイドエフェドリン塩酸塩'],why:'交感神経興奮作用により血圧を上昇させ、高血圧を悪化させるおそれがあるため。',src:S1,p:402},
+ {lv:'ng',c:['thy'],cond:'次の診断を受けた人：甲状腺機能障害',it:['プソイドエフェドリン塩酸塩'],why:'甲状腺機能亢進症の主症状は交感神経系の緊張等によってもたらされており、交感神経系を興奮させる成分は症状を悪化させるおそれがあるため。',src:S1,p:402},
+ {lv:'ng',c:['dm'],cond:'次の診断を受けた人：糖尿病',it:['プソイドエフェドリン塩酸塩'],why:'肝臓でグリコーゲンを分解して血糖値を上昇させる作用があり、糖尿病を悪化させるおそれがあるため。',src:S1,p:402},
+ {lv:'ng',c:['insomnia'],cond:'日常的に不眠の人、不眠症の診断を受けた人',it:['抗ヒスタミン成分を主薬とする催眠鎮静薬（睡眠改善薬）'],why:'睡眠改善薬は慢性的な不眠症状に用いる医薬品でないため。医療機関で不眠症の治療を受けている場合には、その治療を妨げるおそれがあるため。',src:S1,p:402},
+ {lv:'ng',c:['dialysis'],cond:'透析療法を受けている人',it:[AL],why:'長期間服用した場合に、アルミニウム脳症及びアルミニウム骨症を発症したとの報告があるため。',src:S1,p:402},
+ {lv:'ng',c:['mouth'],cond:'口の中に傷やひどいただれのある人',it:['クロルヘキシジングルコン酸塩が配合された製剤（口腔内への適応を有する場合）'],why:'傷やただれの状態を悪化させるおそれがあるため。',src:S1,p:'402–403'},
+ // 小児
+ {lv:'ng',age:'u15',cond:'15歳未満の小児',it:['アスピリン、アスピリンアルミニウム、サザピリン、プロメタジンメチレンジサリチル酸塩、サリチル酸ナトリウム'],why:'外国において、ライ症候群の発症との関連性が示唆されているため。',src:S1,p:403},
+ {lv:'ng',age:'u15',cond:'15歳未満の小児',it:['プロメタジン塩酸塩等のプロメタジンを含む成分'],why:'外国において、乳児突然死症候群、乳児睡眠時無呼吸発作のような致命的な呼吸抑制が現れたとの報告があるため。',src:S1,p:403},
+ {lv:'ng',age:'u15',cond:'15歳未満の小児',it:['イブプロフェン','オキセサゼイン'],why:'一般用医薬品では、小児向けの製品はないため。',src:S1,p:403},
+ {lv:'ng',age:'u15',cond:'15歳未満の小児',it:['抗ヒスタミン成分を主薬とする催眠鎮静薬（睡眠改善薬）'],why:'小児では、神経過敏、興奮を起こすおそれが大きいため。',src:S1,p:403},
+ {lv:'ng',age:'u15',cond:'15歳未満の小児',it:['ロペラミド'],why:'外国で乳幼児が過量摂取した場合に、中枢神経系障害、呼吸抑制、腸管壊死に至る麻痺性イレウスを起こしたとの報告があるため。',src:S1,p:403},
+ {lv:'ng',age:'u12',cond:'12歳未満の小児',it:['コデインリン酸塩水和物、ジヒドロコデインリン酸塩'],why:'重篤な呼吸抑制があらわれるおそれがあるため。',src:S1,p:403},
+ {lv:'ng',age:'u6',cond:'6歳未満の小児',it:['アミノ安息香酸エチル'],why:'メトヘモグロビン血症を起こすおそれがあるため。',src:S1,p:403},
+ {lv:'ng',age:'u3',cond:'3歳未満の小児',it:['ヒマシ油類'],why:'（別表に理由の記載なし）',src:S1,p:403},
+ // 妊婦・授乳婦
+ {lv:'ng',c:PREG,cond:'妊婦又は妊娠していると思われる人',it:['ヒマシ油類'],why:'腸の急激な動きに刺激されて流産・早産を誘発するおそれがあるため。',src:S1,p:403},
+ {lv:'ng',c:PREG,cond:'妊婦又は妊娠していると思われる人',it:['ジフェンヒドラミン塩酸塩を主薬とする催眠鎮静薬（睡眠改善薬）'],why:'妊娠に伴う不眠は、睡眠改善薬の適用症状でないため。',src:S1,p:403},
+ {lv:'ng',c:PREG,cond:'妊婦又は妊娠していると思われる人',it:['エチニルエストラジオール、エストラジオール'],why:'妊娠中の女性ホルモン成分の摂取によって、胎児の先天性異常の発生が報告されているため。',src:S1,p:403},
+ {lv:'ng',c:PREG,cond:'妊婦又は妊娠していると思われる人',it:['オキセサゼイン'],why:'妊娠中における安全性は確立されていないため。',src:S1,p:403},
+ {lv:'ng',c:['p_late'],cond:'出産予定日12週以内の妊婦',it:['アスピリン、アスピリンアルミニウム、イブプロフェン'],why:'妊娠期間の延長、胎児の動脈管の収縮・早期閉鎖、子宮収縮の抑制、分娩時出血の増加のおそれがあるため。',src:S1,p:403},
+ {lv:'ng',c:['lact'],cond:'授乳中の人は本剤を服用しないか、本剤を服用する場合は授乳を避けること',it:['ジフェンヒドラミン塩酸塩、ジフェンヒドラミンサリチル酸塩等のジフェンヒドラミンを含む成分が配合された内服薬、点鼻薬、坐薬、注入軟膏'],why:'乳児に昏睡を起こすおそれがあるため。',src:S1,p:403},
+ {lv:'ng',c:['lact'],cond:'授乳中の人は本剤を服用しないか、本剤を服用する場合は授乳を避けること',it:['アミノフィリン水和物、テオフィリンが配合された鎮咳去痰薬、鎮暈薬'],why:'乳児に神経過敏を起こすことがあるため。',src:S1,p:403},
+ {lv:'ng',c:['lact'],cond:'授乳中の人は本剤を服用しないか、本剤を服用する場合は授乳を避けること',it:['ロートエキスが配合された内服薬、外用痔疾用薬（坐薬、注入軟膏）'],why:'乳児に頻脈を起こすおそれがあるため（なお、授乳婦の乳汁分泌が抑制されることがある）。',src:S1,p:403},
+ {lv:'ng',c:['lact'],cond:'授乳中の人は本剤を服用しないか、本剤を服用する場合は授乳を避けること',it:['センノシド、センナ、ダイオウ又はカサントラノールが配合された内服薬','ヒマシ油類'],why:'乳児に下痢を起こすおそれがあるため。',src:S1,p:403},
+ {lv:'ng',c:['lact'],cond:'授乳中の人は本剤を服用しないか、本剤を服用する場合は授乳を避けること',it:['コデインリン酸塩水和物、ジヒドロコデインリン酸塩'],why:'コデインで、母乳への移行により、乳児でモルヒネ中毒が生じたとの報告があるため。',src:S1,p:403},
+ // 運転
+ {lv:'ng',c:['drive'],cond:'服用後、乗物又は機械類の運転操作をしないこと（かぜ薬、催眠鎮静薬、乗物酔い防止薬、鎮咳去痰薬、口腔咽喉薬、鼻炎用内服薬、アレルギー用薬、内服痔疾用薬）',it:['ジフェンヒドラミン塩酸塩、クロルフェニラミンマレイン酸塩等の抗ヒスタミン成分'],why:'眠気等。',src:S1,p:403},
+ {lv:'ng',c:['drive'],cond:'服用後、乗物又は機械類の運転操作をしないこと（かぜ薬、鎮咳去痰薬）',it:['コデインリン酸塩水和物、ジヒドロコデインリン酸塩、デキストロメトルファン臭化水素酸塩水和物、フェノールフタリン酸デキストロメトルファン（鎮咳去痰薬のみ）'],why:'眠気等。',src:S1,p:404},
+ {lv:'ng',c:['drive'],cond:'服用後、乗物又は機械類の運転操作をしないこと（解熱鎮痛薬、催眠鎮静薬）',it:['ブロモバレリル尿素、アリルイソプロピルアセチル尿素'],why:'眠気等。',src:S1,p:404},
+ {lv:'ng',c:['drive'],cond:'服用後、乗物又は機械類の運転操作をしないこと（止瀉薬）',it:['ロペラミド塩酸塩、ロートエキス'],why:'眠気等。',src:S1,p:404},
+ {lv:'ng',c:['drive'],cond:'服用後、乗物又は機械類の運転操作をしないこと（胃腸鎮痛鎮痙薬、乗物酔い防止薬）',it:['スコポラミン臭化水素酸塩水和物、メチルオクタトロピン臭化物'],why:'眠気、目のかすみ、異常なまぶしさを生じることがあるため。',src:S1,p:404},
+ {lv:'ng',c:['drive'],cond:'服用後、乗物又は機械類の運転操作をしないこと（胃腸薬）',it:['ピレンゼピン塩酸塩水和物'],why:'目のかすみ、異常なまぶしさを生じることがあるため。',src:S1,p:404},
+ {lv:'ng',c:['drive'],cond:'服用後、乗物又は機械類の運転操作をしないこと（かぜ薬、胃腸鎮痛鎮痙薬、鼻炎用内服薬、乗物酔い防止薬）',it:['スコポラミン臭化水素酸塩水和物、メチルオクタトロピン臭化物以外の抗コリン成分'],why:'目のかすみ、異常なまぶしさを生じることがあるため。',src:S1,p:404},
+ // 連用
+ {lv:'ng',c:['longuse'],cond:'長期連用しないこと（かぜ薬、解熱鎮痛薬、抗菌性点眼薬、鼻炎用内服薬、鎮静薬、アレルギー用薬：成分によらず当該薬効群すべて）',it:['かぜ薬、解熱鎮痛薬、抗菌性点眼薬、鼻炎用内服薬、鎮静薬、アレルギー用薬'],why:'一定期間又は一定回数使用しても症状の改善がみられない場合は、ほかに原因がある可能性があるため。',src:S1,p:404},
+ {lv:'ng',c:['longuse'],cond:'長期連用しないこと（外用鎮痛消炎薬）',it:['インドメタシン、フェルビナク、ケトプロフェン、ピロキシカム'],why:'一定期間又は一定回数使用しても症状の改善がみられない場合は、ほかに原因がある可能性があるため。',src:S1,p:404},
+ {lv:'ng',c:['longuse'],cond:'連用しないこと（瀉下薬）',it:['ヒマシ油'],why:'一定期間又は一定回数使用しても症状の改善がみられない場合は、ほかに原因がある可能性があるため。',src:S1,p:404},
+ {lv:'ng',c:['longuse'],cond:'長期連用しないこと（鼻炎用点鼻薬：成分によらずすべて）',it:['鼻炎用点鼻薬'],why:'二次充血、鼻づまり等を生じるおそれがある。',src:S1,p:404},
+ {lv:'ng',c:['longuse'],cond:'短期間の服用にとどめ、連用しないこと（眠気防止薬）',it:['カフェイン、無水カフェイン、カフェインクエン酸塩等のカフェインを含む成分'],why:'眠気防止薬は一時的に緊張を要する場合に居眠りを防止する目的で使用されるもので、連用によって睡眠が不要になるものではなく、適切な睡眠を摂る必要があるため。',src:S1,p:404},
+ {lv:'ng',c:['longuse'],cond:'短期間の服用にとどめ連用しないこと／長期連用しないこと（漢方生薬製剤、外用痔疾用薬、漢方生薬製剤以外の鎮咳去痰薬・瀉下剤・婦人薬、胃腸薬、胃腸鎮痛鎮痙薬）',it:[GLY],why:'偽アルドステロン症を生じるおそれがあるため。',src:S1,p:404},
+ {lv:'ng',c:['longuse'],cond:'長期連用しないこと（胃腸薬、胃腸鎮痛鎮痙薬）',it:[AL],why:'長期連用により、アルミニウム脳症及びアルミニウム骨症を生じるおそれがあるため。',src:S1,p:404},
+ {lv:'ng',c:['longuse'],cond:'長期連用しないこと（外用痔疾用薬、化膿性皮膚疾患用薬、鎮痒消炎薬、しもやけ・あかぎれ用薬）',it:['ステロイド性抗炎症成分（コルチゾン換算で1g又は1mLあたり0.025mg以上を含有する場合。坐薬及び注入軟膏では含量によらず記載）'],why:'副腎皮質の機能低下を生じるおそれがあるため。',src:S1,p:404},
+ {lv:'ng',c:['longuse'],cond:'症状があるときのみの服用にとどめ、連用しないこと（漢方製剤）',it:['芍薬甘草湯'],why:'うっ血性心不全、心室頻拍の副作用が現れることがあるため。',src:S1,p:404},
+ {lv:'ng',c:['longuse'],cond:'1週間以上継続して服用しないこと（止瀉薬）',it:['次没食子酸ビスマス、次硝酸ビスマス等のビスマスを含む成分'],why:'海外において、長期連用した場合に精神神経症状が現れたとの報告があるため。',src:S1,p:405},
+ {lv:'ng',c:['longuse'],cond:'連用しないこと（浣腸薬：成分によらず）',it:['浣腸薬'],why:'感受性の低下（いわゆる“慣れ”）が生じて、習慣的に使用される傾向があるため。',src:S1,p:405},
+ {lv:'ng',c:['longuse'],cond:'○○以上続けて服用しないこと（駆虫薬）',it:['駆虫薬'],why:'過度に服用しても効果が高まることはなく、かえって副作用を生じるおそれがあるため。虫卵には駆虫作用が及ばず、成虫になるのを待つため1ヶ月以上の間隔を置く必要があるため。',src:S1,p:405},
+ {lv:'ng',c:['overdose'],cond:'大量に使用（服用）しないこと',it:['センナ、センノシド、ダイオウ、カサントラノール、ビサコジル、ピコスルファートナトリウム等の刺激性瀉下成分が配合された瀉下剤'],why:'腸管粘膜への刺激が大きくなり、腸管粘膜に炎症を生じるおそれがあるため。',src:S1,p:405},
+ {lv:'ng',c:['overdose'],cond:'過量服用しないこと',it:['指定濫用防止医薬品'],why:'乱用のおそれがあるため。',src:S1,p:405},
+ {lv:'ng',c:['overdose','longuse'],cond:'過量服用・長期連用しないこと',it:['コデインリン酸塩水和物、ジヒドロコデインリン酸塩が配合された鎮咳去痰薬（内服液剤）'],why:'倦怠感や虚脱感等が現れることがあるため。依存性・習慣性がある成分が配合されており、乱用事例が報告されているため。',src:S1,p:405},
+ // 食品
+ {lv:'ng',c:['alcohol'],cond:'服用前後は飲酒しないこと',it:['かぜ薬、解熱鎮痛薬'],why:'肝機能障害、胃腸障害が生じるおそれがあるため。',src:S1,p:405},
+ {lv:'ng',c:['alcohol'],cond:'服用前後は飲酒しないこと',it:['次硝酸ビスマス、次没食子酸ビスマス等のビスマスを含む成分'],why:'吸収増大による精神神経系障害が生じるおそれがあるため。',src:S1,p:405},
+ {lv:'ng',c:['alcohol'],cond:'服用前後は飲酒しないこと',it:['ブロモバレリル尿素又はアリルイソプロピルアセチル尿素が配合された解熱鎮痛薬、催眠鎮静薬、乗物酔い防止薬','抗ヒスタミン成分を主薬とする催眠鎮静薬'],why:'鎮静作用の増強が生じるおそれがあるため。',src:S1,p:405},
+ {lv:'ng',c:['caffeine'],cond:'コーヒーやお茶等のカフェインを含有する飲料と同時に服用しないこと',it:[CAF],why:'カフェインが過量摂取となり、中枢神経系、循環器系等に作用が強く現れるおそれがあるため。',src:S1,p:405},
+ // 併用薬
+ {lv:'ng',c:['laxative'],cond:'本剤を使用している間は、他の瀉下薬（下剤）を使用しないこと',it:['茵蔯蒿湯、大黄甘草湯、大黄牡丹皮湯、麻子仁丸、桃核承気湯、防風通聖散、三黄瀉心湯、大柴胡湯、乙字湯（ダイオウを含む場合）','瀉下成分が配合された駆虫薬'],why:'激しい腹痛を伴う下痢等の副作用が現れやすくなるため。',src:S1,p:405},
+ {lv:'ng',c:['anthelm'],cond:'駆虫薬（瀉下成分が配合されていない場合）を使用している間は、ヒマシ油を使用しないこと',it:['ヒマシ油'],why:'駆虫成分が腸管内で吸収されやすくなるため。',src:S1,p:405},
+ {lv:'ng',c:['castor'],cond:'ヒマシ油を使用している間は、駆虫薬を使用しないこと',it:['駆虫薬'],why:'駆虫成分が腸管内で吸収されやすくなるため。',src:S1,p:405},
+ // 使用部位
+ {lv:'ng',c:['s_eye'],cond:'次の部位には使用しないこと：目や目の周囲、粘膜（口腔、鼻腔、膣等）',it:['みずむし・たむし用薬'],why:'皮膚刺激成分により、強い刺激や痛みを生じるおそれがあるため。',src:S1,p:405},
+ {lv:'ng',c:['s_eye'],cond:'次の部位には使用しないこと：目の周囲、粘膜等',it:['外用鎮痒消炎薬（エアゾール剤に限る）'],why:'エアゾール剤は特定の局所に使用することが一般に困難であり、目などに薬剤が入るおそれがあるため。',src:S1,p:405},
+ {lv:'ng',c:['s_eye','s_eczema'],cond:'次の部位には使用しないこと：目の周囲、粘膜等／湿疹、かぶれ、傷口',it:['外用鎮痛消炎薬'],why:'皮膚刺激成分により、強い刺激や痛みを生じるおそれがあるため。',src:S1,p:405},
+ {lv:'ng',c:['s_genital'],cond:'次の部位には使用しないこと：陰のう、外陰部等',it:['みずむし・たむし用薬'],why:'角質層が薄いため白癬菌は寄生しにくく、陰のう湿疹等、他の病気である可能性があるため。また、皮膚刺激成分により強い刺激や痛みを生じるおそれがあるため。',src:S1,p:406},
+ {lv:'ng',c:['s_eczema'],cond:'次の部位には使用しないこと：湿疹',it:['みずむし・たむし用薬'],why:'湿疹に対する効果はなく、誤って使用すると悪化させるおそれがあるため。',src:S1,p:406},
+ {lv:'ng',c:['s_wet'],cond:'次の部位には使用しないこと：湿潤、ただれ、亀裂や外傷のひどい患部',it:['みずむし・たむし用薬（液剤、軟膏剤又はエアゾール剤の場合）'],why:'刺激成分により、強い刺激や痛みが現れることがあるため。',src:S1,p:406},
+ {lv:'ng',c:['s_eye','s_soft'],cond:'次の部位には使用しないこと：目の周囲、粘膜、やわらかな皮膚面（首の回り等）、顔面等',it:['うおのめ・いぼ・たこ用薬'],why:'角質溶解作用の強い薬剤であり、誤って目に入ると障害を与える危険性があるため。粘膜や首の回り等の柔らかい皮膚面、顔面等に対しては作用が強すぎるため。',src:S1,p:406},
+ {lv:'ng',c:['s_infl'],cond:'次の部位には使用しないこと：炎症又は傷のある患部',it:['うおのめ・いぼ・たこ用薬'],why:'刺激が強く、症状を悪化させるおそれがあるため。',src:S1,p:406},
+ {lv:'ng',c:['s_wet','pus'],cond:'次の部位には使用しないこと：ただれ、化膿している患部',it:['殺菌消毒薬（液体絆創膏）'],why:'湿潤した患部に用いると、分泌液が貯留して症状を悪化させることがあるため。',src:S1,p:406},
+ {lv:'ng',c:['s_wet','s_burn'],cond:'次の部位には使用しないこと：湿潤、ただれのひどい患部、深い傷、ひどいやけどの患部',it:['バシトラシンが配合された化膿性皮膚疾患用薬'],why:'刺激が強く、症状を悪化させるおそれがあるため。',src:S1,p:406},
+ {lv:'ng',c:['uv'],cond:'本剤の使用中は、天候にかかわらず戸外活動を避けるとともに、日常の外出時も貼付部を衣服、サポーター等で覆い、紫外線に当てないこと（貼付後も当分の間同様）',it:['ケトプロフェンが配合された外用鎮痛消炎薬'],why:'使用中又は使用後しばらくしてから重篤な光線過敏症が現れることがあるため。',src:S1,p:406},
+
+ // ---- 5-2 相談すること
+ {lv:'sd',c:PREG,cond:'妊婦又は妊娠していると思われる人',it:['アスピリン、アスピリンアルミニウム、サザピリン、エテンザミド、サリチルアミド、イブプロフェン、イソプロピルアンチピリン、アセトアミノフェンが配合されたかぜ薬、解熱鎮痛薬'],why:'妊娠末期のラットに投与した実験で、胎児に弱い動脈管の収縮がみられたとの報告があるため。アスピリンは動物実験（ラット）で催奇形性、イソプロピルアンチピリンは構造が類似した他のピリン系成分で動物実験（マウス）で催奇形性が報告されているため。',src:S2,p:407},
+ {lv:'sd',c:PREG,cond:'妊婦又は妊娠していると思われる人',it:['ブロモバレリル尿素が配合されたかぜ薬、解熱鎮痛薬、催眠鎮静薬、乗物酔い防止薬','ベタネコール塩化物、ウルソデオキシコール酸','副腎皮質ホルモンが配合された外用痔疾用薬、鎮痒消炎薬'],why:'胎児障害の可能性があり、使用を避けることが望ましいため。',src:S2,p:407},
+ {lv:'sd',c:PREG,cond:'妊婦又は妊娠していると思われる人',it:['コデインリン酸塩水和物、ジヒドロコデインリン酸塩が配合されたかぜ薬、鎮咳去痰薬'],why:'麻薬性鎮咳成分であり、吸収された成分の一部が胎盤関門を通過して胎児へ移行することが知られているため。コデインは動物実験（マウス）で催奇形性が報告されているため。',src:S2,p:407},
+ {lv:'sd',c:PREG,cond:'妊婦又は妊娠していると思われる人',it:['瀉下薬（カルボキシメチルセルロースカルシウム・ナトリウム、ジオクチルソジウムスルホサクシネート又はプランタゴ・オバタ種皮のみからなる場合を除く）','浣腸薬、外用痔疾用薬（坐薬、注入軟膏）'],why:'腸の急激な動きに刺激されて流産・早産を誘発するおそれがあるため。',src:S2,p:407},
+ {lv:'sd',c:['p_early','p_plan'],cond:'妊娠3ヶ月以内の妊婦、妊娠していると思われる人又は妊娠を希望する人',it:['ビタミンA主薬製剤、ビタミンAD主薬製剤'],why:'ビタミンAを妊娠3ヶ月前から妊娠3ヶ月までの間に栄養補助剤から1日10,000国際単位以上継続的に摂取した婦人から生まれた児に、先天異常（口裂、耳・鼻の異常等）の発生率の増加が認められたとの研究報告があるため。',src:S2,p:407},
+ {lv:'sd',c:['lact'],cond:'授乳中の人（かぜ薬、解熱鎮痛薬、鎮咳去痰薬、鼻炎用内服薬、アレルギー用薬）',it:['メチルエフェドリン塩酸塩、メチルエフェドリンサッカリン塩、トリプロリジン塩酸塩水和物、プソイドエフェドリン塩酸塩、ペントキシベリンクエン酸塩、アスピリン、アスピリンアルミニウム、イブプロフェン'],why:'乳汁中に移行する可能性があるため。',src:S2,p:407},
+ {lv:'sd',c:['lact'],cond:'授乳中の人（かぜ薬、解熱鎮痛薬、眠気防止薬、乗物酔い防止薬、鎮咳去痰薬：カフェインとして1回分量100mg以上を含有する場合）',it:['カフェイン、無水カフェイン、安息香酸ナトリウムカフェイン'],why:'乳汁中に移行する可能性があるため。',src:S2,p:407},
+ {lv:'sd',c:['lact'],cond:'授乳中の人（胃腸鎮痛鎮痙薬、乗物酔い防止薬）',it:['メチルオクタトロピン臭化物、メチキセン塩酸塩、ジサイクロミン塩酸塩'],why:'乳汁中に移行する可能性があるため。',src:S2,p:407},
+ {lv:'sd',c:['lact'],cond:'授乳中の人（外用痔疾用薬：坐薬、注入軟膏）',it:['メチルエフェドリン塩酸塩、メチルエフェドリンサッカリン塩'],why:'乳汁中に移行する可能性があるため。',src:S2,p:407},
+ {lv:'sd',c:['lact'],cond:'授乳中の人（止瀉薬）',it:['ロペラミド塩酸塩'],why:'乳汁中に移行する可能性があるため。',src:S2,p:407},
+ {lv:'sd',c:['lact'],cond:'授乳中の人（婦人薬）',it:['エチニルエストラジオール、エストラジオール'],why:'乳汁中に移行する可能性があるため。',src:S2,p:407},
+ {lv:'sd',age:'el',cond:'高齢者',it:['解熱鎮痛薬、鼻炎用内服薬','グリセリンが配合された浣腸薬'],why:'効き目が強すぎたり、副作用が現れやすいため。',src:S2,p:407},
+ {lv:'sd',age:'el',cond:'高齢者',it:['メチルエフェドリン塩酸塩、メチルエフェドリンサッカリン塩、プソイドエフェドリン塩酸塩、トリメトキノール塩酸塩水和物、メトキシフェナミン塩酸塩等のアドレナリン作動成分又はマオウが配合された内服薬、外用痔疾用薬（坐薬、注入軟膏）'],why:'心悸亢進、血圧上昇、糖代謝促進を起こしやすいため。',src:S2,p:407},
+ {lv:'sd',age:'el',cond:'高齢者',it:['グリチルリチン酸二カリウム、グリチルレチン酸又はカンゾウが配合された内服薬、外用痔疾用薬（1日用量がグリチルリチン酸として40mg以上、又はカンゾウとして1g以上を含有する場合）'],why:'偽アルドステロン症を生じやすいため。',src:S2,p:408},
+ {lv:'sd',age:'el',cond:'高齢者',it:['スコポラミン臭化水素酸塩水和物、メチルオクタトロピン臭化物、イソプロパミドヨウ化物等の抗コリン成分又はロートエキスが配合された内服薬、外用痔疾用薬（坐薬、注入軟膏）'],why:'緑内障の悪化、口渇、排尿困難又は便秘の副作用が現れやすいため。',src:S2,p:408},
+ {lv:'sd',age:'u15',c:['fever','seizure'],cond:'発熱している小児、けいれんを起こしたことがある小児',it:['テオフィリン、アミノフィリン水和物'],why:'けいれんを誘発するおそれがあるため。',src:S2,p:408},
+ {lv:'sd',age:'u15',c:['flu'],cond:'水痘（水ぼうそう）もしくはインフルエンザにかかっている又はその疑いのある乳・幼・小児（15歳未満）',it:['サリチルアミド、エテンザミド'],why:'構造が類似しているアスピリンにおいて、ライ症候群の発症との関連性が示唆されており、原則として使用を避ける必要があるため。',src:S2,p:408},
+ {lv:'sd',age:'neo',cond:'1ヶ月未満の乳児（新生児）',it:['マルツエキス'],why:'身体が非常に未熟であり、安易に瀉下薬を使用すると脱水症状を引き起こすおそれがあるため。',src:S2,p:408},
+ {lv:'sd',c:['allergy','asthma','aspasthma'],cond:'薬によりアレルギー症状や喘息を起こしたことがある人',it:['黄色4号（タートラジン）（添加物）'],why:'喘息誘発のおそれがあるため。',src:S2,p:408},
+ {lv:'sd',c:['allergy','asthma','aspasthma'],cond:'薬によりアレルギー症状や喘息を起こしたことがある人',it:['ガジュツ末・真昆布末を含む製剤'],why:'まれにアナフィラキシーを起こすことがあるため。',src:S2,p:408},
+ {lv:'sd',c:['fever'],cond:'次の症状がある人：高熱',it:['かぜ薬、鎮咳去痰薬、鼻炎用内服薬、小児五疳薬'],why:'かぜ以外のウイルス性の感染症その他の重篤な疾患の可能性があるため。',src:S2,p:408},
+ {lv:'sd',c:['seizure'],cond:'次の症状がある人：けいれん',it:['ピペラジンリン酸塩水和物等のピペラジンを含む成分'],why:'痙攣を起こしたことがある人では、発作を誘発する可能性があるため。',src:S2,p:408},
+ {lv:'sd',c:['edema'],cond:'次の症状がある人：むくみ',it:[GLY],why:'偽アルドステロン症の発症のおそれが特にあるため。',src:S2,p:408},
+ {lv:'sd',c:['diarrhea','sdiar','fdiar'],cond:'次の症状がある人：下痢',it:['緩下作用のある成分が配合された内服痔疾用薬'],why:'下痢症状を助長するおそれがあるため。',src:S2,p:408},
+ {lv:'sd',c:['sdiar'],cond:'次の症状がある人：はげしい下痢',it:['小児五疳薬'],why:'大腸炎等の可能性があるため。',src:S2,p:408},
+ {lv:'sd',c:['sdiar'],cond:'次の症状がある人：急性のはげしい下痢又は腹痛・腹部膨満感・吐き気等の症状を伴う下痢',it:['タンニン酸アルブミン、次硝酸ビスマス、次没食子酸ビスマス等の収斂成分を主体とする止瀉薬','ロペラミド塩酸塩'],why:'下痢を止めるとかえって症状を悪化させることがあるため。',src:S2,p:408},
+ {lv:'sd',c:['fdiar'],cond:'次の症状がある人：発熱を伴う下痢、血便又は粘液便の続く人',it:['ロペラミド塩酸塩'],why:'下痢を止めるとかえって症状を悪化させることがあるため。',src:S2,p:408},
+ {lv:'sd',c:['anal'],cond:'次の症状がある人：便秘を避けなければならない肛門疾患',it:['ロペラミド塩酸塩'],why:'便秘が引き起こされることがあるため。',src:S2,p:408},
+ {lv:'sd',c:['abd','nausea'],cond:'次の症状がある人：はげしい腹痛、吐き気・嘔吐',it:['瀉下薬（ヒマシ油、マルツエキスを除く）、浣腸薬、ビサコジルを主薬とする坐薬'],why:'急性腹症（腸管の狭窄、閉塞、腹腔内器官の炎症等）の可能性があり、瀉下薬や浣腸薬の配合成分の刺激によって、その症状を悪化させるおそれがあるため。',src:S2,p:408},
+ {lv:'sd',c:['hbleed'],cond:'次の症状がある人：痔出血',it:['グリセリンが配合された浣腸薬'],why:'腸管、肛門に損傷があると、傷口からグリセリンが血管内に入って溶血を起こすことや、腎不全を起こすおそれがあるため。',src:S2,p:408},
+ {lv:'sd',c:['dysuria','bph'],cond:'次の症状がある人：排尿困難',it:['ジフェンヒドラミン塩酸塩、クロルフェニラミンマレイン酸塩等の抗ヒスタミン成分','ジフェニドール塩酸塩','構成生薬としてマオウを含む漢方処方製剤',ACH,'ロートエキス'],why:'排尿筋の弛緩と括約筋の収縮が起こり、尿の貯留を来すおそれがあるため。特に、前立腺肥大症を伴っている場合には、尿閉を引き起こすおそれがあるため。',src:S2,p:'408–409'},
+ {lv:'sd',c:['mouth'],cond:'次の症状がある人：口内のひどいただれ',it:['含嗽薬'],why:'粘膜刺激を起こすおそれのある成分が配合されている場合があるため。',src:S2,p:409},
+ {lv:'sd',c:['eyepain'],cond:'次の症状がある人：はげしい目の痛み',it:['眼科用薬'],why:'急性緑内障、角膜潰瘍又は外傷等の可能性が考えられるため。急性緑内障では専門医の処置で早急に眼圧を下げないと失明の危険性があるため。',src:S2,p:409},
+ {lv:'sd',c:['epi'],cond:'次の診断を受けた人：てんかん',it:['ジプロフィリン'],why:'中枢神経系の興奮作用により、てんかんの発作を引き起こすおそれがあるため。',src:S2,p:409},
+ {lv:'sd',c:['gu'],cond:'次の診断を受けた人：胃・十二指腸潰瘍',it:['アスピリン、アスピリンアルミニウム、エテンザミド、イソプロピルアンチピリン、アセトアミノフェン、サリチルアミド'],why:'胃・十二指腸潰瘍を悪化させるおそれがあるため。',src:S2,p:409},
+ {lv:'sd',c:['gu'],cond:'次の診断を受けた人：胃・十二指腸潰瘍',it:['次硝酸ビスマス、次没食子酸ビスマス等のビスマスを含む成分'],why:'ビスマスの吸収が高まり、血中に移行する量が多くなり、ビスマスによる精神神経障害等が発現するおそれがあるため。',src:S2,p:409},
+ {lv:'sd',c:['liver'],cond:'次の診断を受けた人：肝臓病',it:['小柴胡湯'],why:'間質性肺炎の副作用が現れやすいため。',src:S2,p:409},
+ {lv:'sd',c:['liver'],cond:'次の診断を受けた人：肝臓病',it:['アスピリン、アスピリンアルミニウム、エテンザミド、イブプロフェン、イソプロピルアンチピリン、アセトアミノフェン','サントニン'],why:'肝機能障害を悪化させるおそれがあるため。',src:S2,p:409},
+ {lv:'sd',c:['liver'],cond:'次の診断を受けた人：肝臓病',it:['ピペラジンリン酸塩等のピペラジンを含む成分'],why:'肝臓における代謝が円滑に行われず、体内への蓄積によって副作用が現れやすくなるため。',src:S2,p:409},
+ {lv:'sd',c:['liver'],cond:'次の診断を受けた人：肝臓病',it:['ガジュツ末・真昆布末を含む製剤'],why:'肝機能障害を起こすことがあるため。',src:S2,p:409},
+ {lv:'sd',c:['thy'],cond:'次の診断を受けた人：甲状腺疾患',it:['ポビドンヨード、ヨウ化カリウム、ヨウ素等のヨウ素系殺菌消毒成分が配合された口腔咽喉薬、含嗽薬'],why:'ヨウ素の体内摂取が増える可能性があり、甲状腺疾患の治療に影響を及ぼすおそれがあるため。',src:S2,p:409},
+ {lv:'sd',c:['thy'],cond:'次の診断を受けた人：甲状腺機能障害、甲状腺機能亢進症',it:ADR,why:'甲状腺機能亢進症の主症状は交感神経系の緊張等によってもたらされており、交感神経系を興奮させる成分は症状を悪化させるおそれがあるため。',src:S2,p:409},
+ {lv:'sd',c:['thy'],cond:'次の診断を受けた人：甲状腺機能障害、甲状腺機能亢進症',it:['ジプロフィリン'],why:'中枢神経系の興奮作用により、症状の悪化を招くおそれがあるため。',src:S2,p:409},
+ {lv:'sd',c:['thy'],cond:'次の診断を受けた人：甲状腺機能障害、甲状腺機能亢進症',it:['水酸化アルミニウム・炭酸マグネシウム・炭酸カルシウム共沈生成物、沈降炭酸カルシウム、無水リン酸水素カルシウム、リン酸水素カルシウム水和物、乳酸カルシウム水和物'],why:'甲状腺ホルモンの吸収を阻害するおそれがあるため。',src:S2,p:409},
+ {lv:'sd',c:['htn'],cond:'次の診断を受けた人：高血圧',it:ADR,why:'交感神経興奮作用により血圧を上昇させ、高血圧を悪化させるおそれがあるため。',src:S2,p:409},
+ {lv:'sd',c:['htn'],cond:'次の診断を受けた人：高血圧',it:[GLY],why:'大量に使用するとナトリウム貯留、カリウム排泄促進が起こり、むくみ（浮腫）等の症状が現れ、高血圧を悪化させるおそれがあるため。',src:S2,p:409},
+ {lv:'sd',c:['heart'],cond:'次の診断を受けた人：心臓病',it:['アドレナリン作動成分が配合された鼻炎用点鼻薬','メチルエフェドリン塩酸塩、トリメトキノール塩酸塩水和物、フェニレフリン塩酸塩、メトキシフェナミン塩酸塩等のアドレナリン作動成分、ジプロフィリン','マオウ',ACH,'ロートエキス'],why:'心臓に負担をかけ、心臓病を悪化させるおそれがあるため。',src:S2,p:'409–410'},
+ {lv:'sd',c:['heart'],cond:'次の診断を受けた人：心臓病',it:[NSAID5],why:'むくみ（浮腫）、循環体液量の増加が起こり、心臓の仕事量が増加し、心臓病を悪化させるおそれがあるため。',src:S2,p:410},
+ {lv:'sd',c:['heart'],cond:'次の診断を受けた人：心臓病',it:['グリチルリチン酸の塩類、カンゾウ又はそのエキス（1日用量がグリチルリチン酸として40mg以上、又はカンゾウとして1g以上を含有する場合）'],why:'大量に使用するとナトリウム貯留、カリウム排泄促進が起こり、むくみ（浮腫）等の症状が現れ、心臓病を悪化させるおそれがあるため。',src:S2,p:410},
+ {lv:'sd',c:['heart'],cond:'次の診断を受けた人：心臓病',it:['硫酸ナトリウム'],why:'血液中の電解質のバランスが損なわれ、心臓の負担が増加し、心臓病を悪化させるおそれがあるため。',src:S2,p:410},
+ {lv:'sd',c:['heart'],cond:'次の診断を受けた人：心臓病',it:['グリセリンが配合された浣腸薬'],why:'排便直後に急激な血圧低下等が現れることがあり、心臓病を悪化させるおそれがあるため。',src:S2,p:410},
+ {lv:'sd',c:['kidney'],cond:'次の診断を受けた人：腎臓病',it:[NSAID5],why:'むくみ（浮腫）、循環体液量の増加が起こり、腎臓病を悪化させるおそれがあるため。',src:S2,p:410},
+ {lv:'sd',c:['kidney'],cond:'次の診断を受けた人：腎臓病',it:[GLY],why:'大量に使用するとナトリウム貯留、カリウム排泄促進が起こり、むくみ（浮腫）等の症状が現れ、腎臓病を悪化させるおそれがあるため。',src:S2,p:410},
+ {lv:'sd',c:['kidney'],cond:'次の診断を受けた人：腎臓病',it:[AL],why:'過剰のアルミニウムイオンが体内に貯留し、アルミニウム脳症、アルミニウム骨症を生じるおそれがあるため。使用する場合には医療機関で定期的に血中アルミニウム等の測定を行う必要があるため。',src:S2,p:410},
+ {lv:'sd',c:['kidney'],cond:'次の診断を受けた人：腎臓病',it:['制酸成分を主体とする胃腸薬','酸化マグネシウム、水酸化マグネシウム、硫酸マグネシウム等のマグネシウムを含む成分、硫酸ナトリウムが配合された瀉下薬'],why:'ナトリウム、カルシウム、マグネシウム等の無機塩類の排泄が遅れたり、体内貯留が現れやすいため。',src:S2,p:410},
+ {lv:'sd',c:['kidney'],cond:'次の診断を受けた人：腎臓病',it:['ピペラジンリン酸塩等のピペラジンを含む成分、プソイドエフェドリン塩酸塩'],why:'腎臓における排泄が円滑に行われず、副作用が現れやすくなるため。',src:S2,p:410},
+ {lv:'sd',c:['dm'],cond:'次の診断を受けた人：糖尿病',it:ADR,why:'肝臓でグリコーゲンを分解して血糖値を上昇させる作用があり、糖尿病の症状を悪化させるおそれがあるため。',src:S2,p:410},
+ {lv:'sd',c:['glaucoma'],cond:'次の診断を受けた人：緑内障',it:['眼科用薬'],why:'緑内障による目のかすみには効果が期待できず、また、充血除去作用成分が配合されている場合には、眼圧が上昇し、緑内障を悪化させるおそれがあるため。',src:S2,p:410},
+ {lv:'sd',c:['glaucoma'],cond:'次の診断を受けた人：緑内障',it:['パパベリン塩酸塩'],why:'眼圧が上昇し、緑内障を悪化させるおそれがあるため。',src:S2,p:410},
+ {lv:'sd',c:['glaucoma'],cond:'次の診断を受けた人：緑内障',it:['抗コリン成分が配合された鼻炎用内服薬、抗コリン成分が配合された鼻炎用点鼻薬','ペントキシベリンクエン酸塩',ACH,'ロートエキス','ジフェニドール塩酸塩','ジフェンヒドラミン塩酸塩、クロルフェニラミンマレイン酸塩等の抗ヒスタミン成分'],why:'抗コリン作用によって房水流出路（房水通路）が狭くなり、眼圧が上昇し、緑内障を悪化させるおそれがあるため。',src:S2,p:'410–411'},
+ {lv:'sd',c:['thromb'],cond:'血栓のある人（脳血栓、心筋梗塞、血栓静脈炎等）、血栓症を起こすおそれのある人',it:['トラネキサム酸（内服）、セトラキサート塩酸塩'],why:'生じた血栓が分解されにくくなるため。',src:S2,p:411},
+ {lv:'sd',c:['anemia'],cond:'次の診断を受けた人：貧血',it:['ピペラジンリン酸塩等のピペラジンを含む成分'],why:'貧血の症状を悪化させるおそれがあるため。',src:S2,p:411},
+ {lv:'sd',c:['sle'],cond:'次の診断を受けた人：全身性エリテマトーデス、混合性結合組織病',it:['イブプロフェン'],why:'無菌性髄膜炎の副作用を起こしやすいため。',src:S2,p:411},
+ {lv:'sd',c:['gu','ibd'],cond:'次の病気にかかったことのある人：胃・十二指腸潰瘍、潰瘍性大腸炎、クローン病',it:['イブプロフェン'],why:'プロスタグランジン産生抑制作用によって消化管粘膜の防御機能が低下し、胃・十二指腸潰瘍、潰瘍性大腸炎、クローン病が再発するおそれがあるため。',src:S2,p:411},
+ {lv:'sd',c:['laxative'],cond:'次の医薬品を使用（服用）している人：瀉下薬（下剤）',it:['柴胡加竜骨牡蛎湯、響声破笛丸'],why:'腹痛、激しい腹痛を伴う下痢が現れやすくなるため。',src:S2,p:411},
+ {lv:'sd',c:['maoi'],cond:'モノアミン酸化酵素阻害剤（セレギリン塩酸塩等）で治療を受けている人',it:['プソイドエフェドリン塩酸塩'],why:'モノアミン酸化酵素阻害剤との相互作用によって、血圧を上昇させるおそれがあるため。',src:S2,p:411},
+ {lv:'sd',c:['ifn'],cond:'インターフェロン製剤で治療を受けている人',it:['小柴胡湯、小柴胡湯が配合されたかぜ薬'],why:'インターフェロン製剤との相互作用によって、間質性肺炎を起こしやすくなるため。',src:S2,p:411}
+];
+
+/* ===== 飲み合わせ（併用） ===== */
+const DRUG_GROUPS = [
+  {t:'かぜ・痛み・眠り', d:[['cold','かぜ薬'],['analg','解熱鎮痛薬（内服）'],['supp','解熱鎮痛の坐薬'],['topical','外用消炎鎮痛薬'],['bromo','ブロモバレリル尿素等の鎮静成分を含む薬'],['sedative','催眠鎮静薬・睡眠改善薬'],['herbsed','生薬の鎮静薬'],['wake','眠気防止薬（カフェイン）'],['motion','乗物酔い防止薬']]},
+  {t:'せき・鼻・アレルギー・目', d:[['cough','鎮咳去痰薬'],['nasalOral','鼻炎用内服薬'],['nasalSpray','鼻炎用点鼻薬'],['allergyDrug','アレルギー用薬'],['eyeAH','抗ヒスタミン成分配合の目薬']]},
+  {t:'胃腸', d:[['antacid','制酸成分の胃腸薬'],['antichol','ロートエキス・ピレンゼピン配合の胃腸薬'],['spasm','胃腸鎮痛鎮痙薬（抗コリン）'],['loperamide','ロペラミド（止瀉薬）'],['bismuth','ビスマスを含む止瀉薬'],['antisep','腸内殺菌成分配合の止瀉薬'],['probiotic','生菌成分の整腸薬'],['laxative','瀉下薬（下剤）'],['daio','ダイオウを含む漢方（大黄甘草湯 等）'],['castor','ヒマシ油'],['anthelm','駆虫薬']]},
+  {t:'その他の薬', d:[['iron','貧血用薬（鉄製剤）'],['cardiac','強心薬'],['coq10','コエンザイムQ10'],['nicotine','禁煙補助剤（ニコチン）'],['hemorrhoid','痔疾用薬'],['calcium','カルシウム含有製剤'],['kampo','漢方処方製剤・生薬製剤'],['saiko','柴胡加竜骨牡蛎湯・響声破笛丸'],['shosaiko','小柴胡湯'],['pseudo','プソイドエフェドリン配合薬']]},
+  {t:'治療中の薬・飲食・嗜好', d:[['maoi','MAO阻害剤（セレギリン等）'],['ifn','インターフェロン製剤'],['alcohol','お酒'],['coffee','コーヒー・お茶（カフェイン飲料）'],['tannin','緑茶・紅茶・コーヒー・ワイン・柿'],['smoking','喫煙']]}
+];
+const DRUG = {}; DRUG_GROUPS.forEach(g=>g.d.forEach(([id,l])=>DRUG[id]=l));
+// lv: ng=別表してはいけない / sd=別表相談 / ct=第3章で併用を避ける・注意
+const INTER = [
+ {a:'cold',b:['cold','analg','cough','nasalOral','allergyDrug','sedative'],lv:'ct',why:'かぜ薬は複数の有効成分を含むため、同じ成分又は同種の作用を持つ成分が重複し、効き目が強くなりすぎたり副作用が起こりやすくなるおそれ。',src:'第3章Ⅰ-1 かぜ薬【相互作用】'},
+ {a:'alcohol',b:['cold','analg'],lv:'ng',why:'服用前後は飲酒しないこと：肝機能障害、胃腸障害が生じるおそれ。',src:'別表5-1 p.405'},
+ {a:'analg',b:['analg','cold','sedative','topical'],lv:'ct',why:'同じ成分又は同種の作用を持つ成分が重複し、効き目が強く現れすぎたり副作用が起こりやすくなるおそれ（外用消炎鎮痛薬は一般用医薬品に限らない）。',src:'第3章Ⅰ-2 解熱鎮痛薬【相互作用】'},
+ {a:'supp',b:['analg','cold'],lv:'ct',why:'坐薬と内服薬は影響し合わないとの誤った認識があるため、アセトアミノフェン坐薬と解熱鎮痛薬・かぜ薬を併用しないよう注意喚起が必要。',src:'第3章Ⅰ-2 解熱鎮痛薬'},
+ {a:'bromo',b:['sedative','bromo','motion'],lv:'ct',why:'鎮静作用があり、鎮静成分が配合された他の医薬品の併用は避ける。',src:'第3章Ⅰ-2（ブロモバレリル尿素等）'},
+ {a:'sedative',b:['sedative','cold','allergyDrug','motion'],lv:'ct',why:'ジフェンヒドラミン塩酸塩、ブロモバレリル尿素、アリルイソプロピルアセチル尿素は他の薬にも配合されていることがあり、他の催眠鎮静薬と併用すると効き目や副作用が増強されるおそれ。',src:'第3章Ⅰ-3 眠気を促す薬【相互作用】'},
+ {a:'alcohol',b:['sedative','bromo'],lv:'ng',why:'服用前後は飲酒しないこと：鎮静作用の増強が生じるおそれ（ブロモバレリル尿素・アリルイソプロピルアセチル尿素配合薬、抗ヒスタミン成分主薬の催眠鎮静薬）。',src:'別表5-1 p.405'},
+ {a:'herbsed',b:['herbsed','sedative'],lv:'ct',why:'生薬成分のみからなる鎮静薬であっても、複数の鎮静薬の併用や長期連用は避けるべき。',src:'第3章Ⅰ-3（生薬成分）'},
+ {a:'wake',b:['coffee'],lv:'ng',why:'コーヒーやお茶等のカフェインを含有する飲料と同時に服用しないこと：カフェインが過量摂取となり、中枢神経系、循環器系等に作用が強く現れるおそれ。',src:'別表5-1 p.405'},
+ {a:'wake',b:['cold','allergyDrug','wake'],lv:'ct',why:'かぜ薬やアレルギー用薬の眠気を抑える目的での使用は不適切。それらにはカフェインが配合されている場合が多く、重複摂取を避ける観点からも併用を避ける。',src:'第3章Ⅰ-4 眠気を防ぐ薬【相互作用】'},
+ {a:'motion',b:['cold','analg','sedative','cough','spasm','allergyDrug','nasalOral','motion'],lv:'ct',why:'抗ヒスタミン成分、抗コリン成分、鎮静成分、カフェイン類等の配合成分が重複して、鎮静作用や副作用が強く現れるおそれ。',src:'第3章Ⅰ-5 乗物酔い防止薬【相互作用】'},
+ {a:'cough',b:['cough','cold','nasalOral','nasalSpray','sedative','motion','allergyDrug'],lv:'ct',why:'抗ヒスタミン成分やアドレナリン作動成分を含有する医薬品等と併用すると、同じ成分又は同種の作用を有する成分が重複摂取となり、効き目が強すぎたり副作用が起こりやすくなるおそれ。「咳止め」と「鼻炎の薬」は影響し合わないという誤認に注意。',src:'第3章Ⅱ-1 咳止め・痰を出しやすくする薬【相互作用】'},
+ {a:'antacid',b:['cold','analg','antacid','calcium'],lv:'ct',why:'制酸成分はかぜ薬・解熱鎮痛薬等にも配合されていることが多く、制酸作用が強くなりすぎるほか、高カルシウム血症、高マグネシウム血症等を生じるおそれ。',src:'第3章Ⅲ-1 胃の薬（制酸成分）'},
+ {a:'antacid',b:['loperamide','bismuth','laxative'],lv:'ct',why:'カルシウム・アルミニウムを含む成分は止瀉薬に、マグネシウムを含む成分は瀉下薬にも配合される成分であり、それぞれ便秘、下痢等の症状に注意。',src:'第3章Ⅲ-1 胃の薬（制酸成分）'},
+ {a:'antichol',b:['spasm','motion'],lv:'ct',why:'ロートエキスやピレンゼピン塩酸塩を含有する胃腸薬では、胃腸鎮痛鎮痙薬、乗物酔い防止薬との併用を避ける。',src:'第3章Ⅲ-1 胃の薬'},
+ {a:'spasm',b:['spasm','cold','motion','nasalOral','sedative','cough','allergyDrug','antichol'],lv:'ct',why:'抗コリン作用を有する成分（一部の抗ヒスタミン成分を含む）を含有する医薬品どうしを併用すると、抗コリン作用が増強され、排尿困難、目のかすみや異常な眩しさ、頭痛、眠気、口渇、便秘等の副作用が現れやすくなる。',src:'第3章Ⅲ-3 胃腸鎮痛鎮痙薬【相互作用】'},
+ {a:'loperamide',b:['spasm'],lv:'ct',why:'ロペラミドは腸管の運動を低下させる作用を示し、胃腸鎮痛鎮痙薬との併用は避ける。',src:'第3章Ⅲ-2 腸の薬（ロペラミド）'},
+ {a:'alcohol',b:['loperamide'],lv:'ct',why:'中枢抑制作用が増強するおそれがあるため、服用時は飲酒しない。',src:'第3章Ⅲ-2 腸の薬（ロペラミド）'},
+ {a:'alcohol',b:['bismuth'],lv:'ng',why:'服用前後は飲酒しないこと：吸収増大（循環血液中への移行が高まる）による精神神経系障害が生じるおそれ。',src:'別表5-1 p.405'},
+ {a:'probiotic',b:['antisep'],lv:'ct',why:'生菌成分が配合された整腸薬に、腸内殺菌成分が配合された止瀉薬を併用すると、生菌成分の働きが腸内殺菌成分によって弱められる。',src:'第3章Ⅲ-2 腸の薬【相互作用】'},
+ {a:'laxative',b:['laxative'],lv:'ct',why:'複数の瀉下薬を併用すると、激しい腹痛を伴う下痢や下痢に伴う脱水症状等を生じるおそれ。',src:'第3章Ⅲ-2 腸の薬【相互作用】'},
+ {a:'daio',b:['laxative','daio'],lv:'ng',why:'本剤を使用している間は他の瀉下薬（下剤）を使用しないこと：激しい腹痛を伴う下痢等の副作用が現れやすくなる（茵蔯蒿湯、大黄甘草湯、大黄牡丹皮湯、麻子仁丸、桃核承気湯、防風通聖散、三黄瀉心湯、大柴胡湯、乙字湯〔ダイオウを含む場合〕、瀉下成分配合の駆虫薬）。',src:'別表5-1 p.405'},
+ {a:'castor',b:['anthelm'],lv:'ng',why:'駆虫成分が腸管内で吸収されやすくなり、副作用を生じる危険性が高まるため、ヒマシ油と駆虫薬の併用は避ける。',src:'別表5-1 p.405／第3章Ⅲ-4'},
+ {a:'anthelm',b:['anthelm'],lv:'ct',why:'複数の駆虫薬を併用しても駆虫効果が高まることはなく、副作用が現れやすくなる。',src:'第3章Ⅲ-4 駆虫薬'},
+ {a:'alcohol',b:['anthelm'],lv:'ct',why:'パモ酸ピルビニウムでは、脂質分の多い食事やアルコール摂取は避けるべき（吸収が高まるおそれ）。',src:'第3章Ⅲ-4 駆虫薬（パモ酸ピルビニウム）'},
+ {a:'saiko',b:['laxative'],lv:'sd',why:'瀉下薬を使用している人は相談すること：腹痛、激しい腹痛を伴う下痢が現れやすくなる。',src:'別表5-2 p.411'},
+ {a:'pseudo',b:['maoi'],lv:'sd',why:'MAO阻害剤で治療を受けている人は相談すること：相互作用によって血圧を上昇させるおそれ。',src:'別表5-2 p.411'},
+ {a:'shosaiko',b:['ifn'],lv:'sd',why:'インターフェロン製剤で治療を受けている人は相談すること：間質性肺炎を起こしやすくなる。',src:'別表5-2 p.411'},
+ {a:'iron',b:['iron'],lv:'ct',why:'複数の貧血用薬と併用すると鉄分の過剰摂取となり、胃腸障害や便秘等の副作用が起こりやすくなる。',src:'第3章Ⅳ 貧血用薬【相互作用】'},
+ {a:'iron',b:['tannin'],lv:'ct',why:'服用の前後30分にタンニン酸を含む飲食物を摂取すると、タンニン酸と反応して鉄の吸収が悪くなることがある。',src:'第3章Ⅳ 貧血用薬【相互作用】'},
+ {a:'coq10',b:['cardiac'],lv:'ct',why:'作用が増強されて心臓に負担を生じたり副作用が現れやすくなるおそれがあり、強心薬等の併用は避ける。',src:'第3章Ⅳ（ユビデカレノン）'},
+ {a:'nicotine',b:['cough','nasalOral','nasalSpray','hemorrhoid'],lv:'ct',why:'ニコチンは交感神経系を興奮させる作用を示し、アドレナリン作動成分が配合された医薬品（鎮咳去痰薬、鼻炎用薬、痔疾用薬等）との併用により、その作用を増強させるおそれ。',src:'第3章ⅩⅡ 禁煙補助剤'},
+ {a:'nicotine',b:['smoking','nicotine'],lv:'ct',why:'使用中又は使用直後の喫煙、他のニコチン含有製剤の併用は、血中ニコチン濃度の急上昇・ニコチンの過剰摂取となるおそれ。',src:'第3章ⅩⅡ 禁煙補助剤'},
+ {a:'calcium',b:['calcium','antacid'],lv:'ct',why:'カルシウムを含む成分は胃腸薬等にも配合されており、併用によりカルシウムの過剰摂取（高カルシウム血症）を生じないよう留意。',src:'第3章ⅩⅢ 滋養強壮保健薬'},
+ {a:'kampo',b:['kampo'],lv:'ct',why:'同じ生薬を含む漢方処方製剤が併用されると、作用が強く現れたり副作用を生じやすくなるおそれ（カンゾウの重複による偽アルドステロン症など）。自己判断での生薬追加も処方が成立しなくなるおそれ。',src:'第3章ⅩⅣ 漢方処方製剤【相互作用】'},
+ {a:'eyeAH',b:['nasalSpray'],lv:'ct',why:'抗ヒスタミン成分配合の点眼薬を鼻炎用点鼻薬と併用した場合には眠気が現れることがあるため、乗物又は機械類の運転操作を避ける。',src:'第3章Ⅸ 眼科用薬'}
+];
+
+/* ===== 成分の分類（逆引き用） ===== */
+const CLASS = [
+  {name:'抗ヒスタミン成分', words:['抗ヒスタミン'], members:['ジフェンヒドラミン','クロルフェニラミン','トリプロリジン','プロメタジン','メキタジン','ケトチフェン','クレマスチン','カルビノキサミン']},
+  {name:'抗コリン成分', words:['抗コリン'], members:['スコポラミン','メチルオクタトロピン','イソプロパミド','メチキセン','ジサイクロミン','ブチルスコポラミン','ロートエキス','ベラドンナ']},
+  {name:'アドレナリン作動成分', words:['アドレナリン作動','アドレナリン作用'], members:['メチルエフェドリン','プソイドエフェドリン','トリメトキノール','フェニレフリン','メトキシフェナミン','マオウ']},
+  {name:'カンゾウ・グリチルリチン酸', words:['グリチルリチン','カンゾウ'], members:['グリチルリチン','グリチルレチン','カンゾウ']},
+  {name:'ステロイド性抗炎症成分', words:['ステロイド','副腎皮質ホルモン'], members:['ステロイド','副腎皮質','コルチゾン','ヒドロコルチゾン','プレドニゾロン']},
+  {name:'カフェイン類', words:['カフェイン'], members:['カフェイン']},
+  {name:'解熱鎮痛成分', words:['解熱鎮痛'], members:['アスピリン','アセトアミノフェン','イブプロフェン','イソプロピルアンチピリン','エテンザミド','サリチルアミド','サザピリン']}
+];
+const KEYS = [
+  ['交感神経・鼻','プソイドエフェドリン','メチルエフェドリン','フェニレフリン','トリメトキノール','メトキシフェナミン','マオウ'],
+  ['抗ヒスタミン・抗コリン','ジフェンヒドラミン','クロルフェニラミン','トリプロリジン','プロメタジン','メキタジン','スコポラミン','メチルオクタトロピン','イソプロパミド','ブチルスコポラミン','ロートエキス','ピレンゼピン','ジフェニドール','メチキセン','ジサイクロミン'],
+  ['解熱鎮痛・消炎','アスピリン','サザピリン','エテンザミド','サリチルアミド','アセトアミノフェン','イブプロフェン','イソプロピルアンチピリン','インドメタシン','ケトプロフェン','フェルビナク','ピロキシカム','ステロイド'],
+  ['鎮静・鎮咳','ブロモバレリル尿素','アリルイソプロピルアセチル尿素','コデイン','ジヒドロコデイン','デキストロメトルファン','チペピジン','ペントキシベリン','テオフィリン','アミノフィリン','ジプロフィリン','カフェイン'],
+  ['胃腸・下剤','ロペラミド','ビスマス','タンニン酸アルブミン','アルミニウム','マグネシウム','硫酸ナトリウム','ヒマシ油','センノシド','ダイオウ','ビサコジル','グリセリン','マルツエキス','ピペラジン','サントニン','オキセサゼイン','アミノ安息香酸エチル'],
+  ['漢方・生薬','カンゾウ','芍薬甘草湯','小柴胡湯','柴胡加竜骨牡蛎湯','ガジュツ'],
+  ['その他','エストラジオール','ビタミンA','ポビドンヨード','ヨウ素','クロルヘキシジン','トラネキサム酸','セトラキサート','パパベリン','リドカイン','カルシウム','バシトラシン','タートラジン','カゼイン']
+];
+
+/* ===== util ===== */
+const $=s=>document.querySelector(s);
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const LV={ng:'使用しないこと',sd:'相談すること',ct:'併用に注意'};
+const badge=lv=>`<span class="badge b-${lv}">${LV[lv]}</span>`;
+const srcText=r=>`手引き 別表${r.src}（p.${r.p}）`;
+
+/* ===== Tab 1: 条件から探す ===== */
+const sel = new Set(['glaucoma']); let age = null;
+function renderPicker(){
+  $('#picker').innerHTML = GROUPS.map(g=>`<div class="grp"><h3>${g.title}</h3>${g.hint?`<p class="hint">${g.hint}</p>`:''}<div class="chips">${
+    g.chips.map(([id,l])=>`<button class="chip" id="c-${id}" data-id="${id}" data-g="${g.id}" aria-pressed="${g.single?age===id:sel.has(id)}">${esc(l)}</button>`).join('')}</div></div>`).join('')
+    + `<div><button class="btn" id="clear">選択をすべて解除</button></div>`;
+}
+function ruleHits(r){
+  const via=[]; let note='';
+  const ageOK = r.age ? (age && AGES[r.age].includes(age)) : null;
+  if(r.age && !r.c){ if(ageOK) via.push(CHIP[age].label); else return null; }
+  else if(r.age && r.c){
+    const cs=r.c.filter(x=>sel.has(x)); if(!cs.length) return null;
+    if(age && !ageOK) return null;
+    cs.forEach(x=>via.push(CHIP[x].label));
+    if(ageOK) via.push(CHIP[age].label); else note=`※${AGE_LABEL[r.age]}の場合`;
+  } else {
+    const cs=r.c.filter(x=>sel.has(x)); if(!cs.length) return null; cs.forEach(x=>via.push(CHIP[x].label));
+  }
+  return {via,note};
+}
+function ruleCard(r,h,showVia=true){
+  return `<div class="rule"><div class="cond">「${esc(r.cond)}」</div>
+   ${showVia&&h?`<div class="via">該当：${h.via.map(v=>`<span class="tag">${esc(v)}</span>`).join('')}${h.note?`<span class="note">${esc(h.note)}</span>`:''}</div>`:''}
+   <div class="items">${r.it.map(i=>`<span class="it">${esc(i)}</span>`).join('')}</div>
+   <div class="why">${esc(r.why)}</div><div class="src">${srcText(r)}</div></div>`;
+}
+function renderCond(){
+  const chosen=[...sel].map(x=>CHIP[x].label).concat(age?[CHIP[age].label]:[]);
+  const hits=RULES.map(r=>({r,h:ruleHits(r)})).filter(x=>x.h);
+  const ng=hits.filter(x=>x.r.lv==='ng'), sd=hits.filter(x=>x.r.lv==='sd');
+  let html=`<div class="selbar"><span class="lab">選択中：</span>${chosen.length?chosen.map(c=>`<span class="tag">${esc(c)}</span>`).join(''):'<span class="lab">なし</span>'}</div>`;
+  if(!chosen.length){ $('#cond-out').innerHTML=html+`<div class="empty">左の一覧から持病・年齢・妊娠などを選ぶと、使えない成分と相談が必要な成分がここに並びます。</div>`; return;}
+  if(!hits.length){ $('#cond-out').innerHTML=html+`<div class="empty">選んだ条件に該当する記載は別表にありません。</div>`; return;}
+  // 成分ごとに集約
+  const agg=new Map();
+  hits.forEach(({r,h})=>r.it.forEach(i=>{
+    const k=i; const cur=agg.get(k)||{lv:r.lv,via:new Set(),note:''};
+    if(r.lv==='ng') cur.lv='ng'; h.via.forEach(v=>cur.via.add(v)); if(h.note) cur.note=h.note; agg.set(k,cur);
+  }));
+  const rows=[...agg.entries()].sort((a,b)=>(a[1].lv===b[1].lv?0:a[1].lv==='ng'?-1:1));
+  html+=`<div class="count"><span>${badge('ng')} <b>${ng.length}</b>項目</span><span>${badge('sd')} <b>${sd.length}</b>項目</span><span class="lab">／該当する成分・製品 <b>${rows.length}</b></span></div>`;
+  html+=`<h2 class="sec-title">該当する成分・製品の一覧</h2><div class="tblwrap"><table class="agg"><thead><tr><th>区分</th><th>成分・薬効群</th><th>該当した条件</th></tr></thead><tbody>${
+    rows.map(([k,v])=>`<tr><td class="lv">${badge(v.lv)}</td><td>${esc(k)}</td><td class="vc">${[...v.via].map(esc).join('、')}${v.note?`<br><span class="note">${esc(v.note)}</span>`:''}</td></tr>`).join('')}</tbody></table></div>`;
+  if(ng.length) html+=`<div class="box ng"><h2>してはいけないこと <span>次の人は使用（服用）しないこと 等</span></h2>${ng.map(x=>ruleCard(x.r,x.h)).join('')}</div>`;
+  if(sd.length) html+=`<div class="box sd"><h2>相談すること <span>使用前に医師・薬剤師・登録販売者に相談</span></h2>${sd.map(x=>ruleCard(x.r,x.h)).join('')}</div>`;
+  $('#cond-out').innerHTML=html;
+}
+$('#picker').addEventListener('click',e=>{
+  if(e.target.id==='clear'){sel.clear();age=null;renderPicker();renderCond();return;}
+  const b=e.target.closest('.chip'); if(!b) return; const id=b.dataset.id;
+  if(b.dataset.g==='age'){ age = age===id?null:id; }
+  else if(PREG_STAGE.includes(id)){ const on=sel.has(id); PREG_STAGE.forEach(x=>sel.delete(x)); if(!on) sel.add(id); }
+  else { sel.has(id)?sel.delete(id):sel.add(id); }
+  renderPicker(); renderCond();
+  const nb=document.getElementById('c-'+id); if(nb) nb.focus();
+});
+
+/* ===== Tab 2: 成分から探す ===== */
+let curKey='プソイドエフェドリン';
+function renderKeys(){
+  $('#keys').innerHTML=KEYS.map(([t,...ks])=>`<div class="kh">${t}</div><div class="keys">${ks.map(k=>`<button class="ikey" data-k="${k}" aria-pressed="${k===curKey}">${k}</button>`).join('')}</div>`).join('');
+}
+function hl(s,terms){ let out=esc(s); terms.forEach(t=>{ if(!t) return; out=out.split(esc(t)).join(`<mark>${esc(t)}</mark>`);}); return out; }
+function renderIngr(){
+  const q=curKey.trim();
+  if(!q){ $('#ingr-out').innerHTML=`<div class="empty">成分名を入力するか、左の候補を押してください。</div>`; return; }
+  const classes=CLASS.filter(c=>c.members.some(m=>q.includes(m)||m.includes(q)) && !c.words.some(w=>q.includes(w)));
+  const direct=[], viaClass=[];
+  RULES.forEach(r=>{
+    const text=r.it.join('／');
+    if(text.includes(q)) direct.push(r);
+    else { const c=classes.find(c=>c.words.some(w=>text.includes(w))); if(c) viaClass.push({r,c}); }
+  });
+  const inter=INTER.filter(x=>x.why.includes(q));
+  let html=`<div class="selbar"><span class="lab">検索：</span><span class="tag">${esc(q)}</span>${classes.length?`<span class="lab">（分類：${classes.map(c=>esc(c.name)).join('、')}）</span>`:''}</div>`;
+  const total=direct.length+viaClass.length+inter.length;
+  if(!total){ $('#ingr-out').innerHTML=html+`<div class="empty">「${esc(q)}」を含む記載は別表・相互作用データにありません。表記ゆれ（塩酸塩などを省く）を試してください。</div>`; return; }
+  const ng=direct.filter(r=>r.lv==='ng'), sd=direct.filter(r=>r.lv==='sd');
+  const card=(r,terms,extra='')=>`<div class="rule">${extra}<div class="cond">「${esc(r.cond)}」</div>${r.c||r.age?`<div class="via">対象：${[...(r.c||[]).map(x=>CHIP[x].label),...(r.age?[AGE_LABEL[r.age]]:[])].map(v=>`<span class="tag">${esc(v)}</span>`).join('')}</div>`:''}<div class="items">${r.it.map(i=>`<span class="it">${hl(i,terms)}</span>`).join('')}</div><div class="why">${esc(r.why)}</div><div class="src">${srcText(r)}</div></div>`;
+  html+=`<div class="count"><span>${badge('ng')} <b>${ng.length+viaClass.filter(x=>x.r.lv==='ng').length}</b></span><span>${badge('sd')} <b>${sd.length+viaClass.filter(x=>x.r.lv==='sd').length}</b></span><span>${badge('ct')} <b>${inter.length}</b></span></div>`;
+  if(ng.length) html+=`<div class="box ng"><h2>してはいけないこと</h2>${ng.map(r=>card(r,[q])).join('')}</div>`;
+  if(sd.length) html+=`<div class="box sd"><h2>相談すること</h2>${sd.map(r=>card(r,[q])).join('')}</div>`;
+  if(viaClass.length) html+=`<h2 class="sec-title">分類名で記載されているもの（「${esc(q)}」も含まれる）</h2>`+
+    ['ng','sd'].map(lv=>{const xs=viaClass.filter(x=>x.r.lv===lv); return xs.length?`<div class="box ${lv}"><h2>${LV[lv]}<span>${esc([...new Set(xs.map(x=>x.c.name))].join('、'))}として</span></h2>${xs.map(x=>card(x.r,x.c.words)).join('')}</div>`:'';}).join('');
+  if(inter.length) html+=`<div class="box ct"><h2>飲み合わせの記載</h2>${inter.map(x=>`<div class="rule"><div class="pair"><span class="p">${esc(DRUG[x.a])}</span><span class="x">×</span>${x.b.map(b=>`<span class="p">${esc(DRUG[b])}</span>`).join('<span class="x">／</span>')}</div><div class="why">${hl(x.why,[q])}</div><div class="src">${esc(x.src)}</div></div>`).join('')}</div>`;
+  $('#ingr-out').innerHTML=html;
+}
+$('#keys').addEventListener('click',e=>{const b=e.target.closest('.ikey'); if(!b) return; curKey=b.dataset.k; $('#q').value=curKey; renderKeys(); renderIngr();});
+$('#q').addEventListener('input',e=>{curKey=e.target.value.trim(); renderKeys(); renderIngr();});
+
+/* ===== Tab 3: 飲み合わせ ===== */
+const csel=new Set(['cold','motion','alcohol']);
+function renderComboPicker(){
+  $('#combo-picker').innerHTML=`<p class="hint" style="margin:0;font-size:12.5px;color:var(--muted)">同時に使う薬・飲食を2つ以上選ぶと、組み合わせの注意を表示します。1つだけ選ぶと、その薬と注意が必要な相手を一覧します。</p>`+
+   DRUG_GROUPS.map(g=>`<div class="grp"><h3>${g.t}</h3><div class="chips">${g.d.map(([id,l])=>`<button class="chip" id="d-${id}" data-id="${id}" aria-pressed="${csel.has(id)}">${esc(l)}</button>`).join('')}</div></div>`).join('')+
+   `<div><button class="btn" id="cclear">選択をすべて解除</button></div>`;
+}
+function pairsOf(x){ const out=[]; INTER.forEach(it=>{ if(it.a===x) it.b.forEach(b=>out.push({it,o:b})); else if(it.b.includes(x)) out.push({it,o:it.a}); }); return out; }
+function renderCombo(){
+  const s=[...csel]; let html=`<div class="selbar"><span class="lab">選択中：</span>${s.length?s.map(x=>`<span class="tag">${esc(DRUG[x])}</span>`).join(''):'<span class="lab">なし</span>'}</div>`;
+  if(!s.length){ $('#combo-out').innerHTML=html+`<div class="empty">左から薬や飲食物を選んでください。</div>`; return; }
+  const order={ng:0,sd:1,ct:2};
+  const matched=INTER.filter(it=>csel.has(it.a)).map(it=>({it,on:it.b.filter(b=>b!==it.a&&csel.has(b))})).filter(x=>x.on.length).sort((a,b)=>order[a.it.lv]-order[b.it.lv]);
+  const pairCard=(it,on)=>`<div class="rule"><div class="pair"><span class="p on">${esc(DRUG[it.a])}</span><span class="x">×</span>${it.b.map(b=>`<span class="p${on.includes(b)?' on':''}">${b===it.a?'同じ種類の別の薬':esc(DRUG[b])}</span>`).join('<span class="x">／</span>')}</div><div class="why" style="">${esc(it.why)}</div><div class="src">${esc(it.src)}</div></div>`;
+  if(matched.length){
+    html+=`<h2 class="sec-title">選んだ組み合わせで該当</h2>`;
+    ['ng','sd','ct'].forEach(lv=>{const xs=matched.filter(x=>x.it.lv===lv); if(xs.length) html+=`<div class="box ${lv}"><h2>${lv==='ng'?'してはいけないこと':lv==='sd'?'相談すること':'併用を避ける・注意（第3章）'}</h2>${xs.map(x=>pairCard(x.it,x.on)).join('')}</div>`;});
+  } else html+=`<div class="empty">選んだ組み合わせには、手引きの別表・第3章【相互作用】に記載された注意はありません。</div>`;
+  // 各選択の相手一覧
+  html+=`<h2 class="sec-title">選んだものと注意が必要な相手（全体）</h2><div class="tblwrap"><table class="agg"><thead><tr><th>区分</th><th>選んだもの</th><th>注意が必要な相手</th></tr></thead><tbody>${
+    s.flatMap(x=>{ const m=new Map(); pairsOf(x).forEach(({it,o})=>{ const k=o===x?'同じ種類の別の薬':DRUG[o]; const cur=m.get(k); if(!cur||order[it.lv]<order[cur]) m.set(k,it.lv); });
+      return [...m.entries()].sort((a,b)=>order[a[1]]-order[b[1]]).map(([k,lv])=>`<tr><td class="lv">${badge(lv)}</td><td>${esc(DRUG[x])}</td><td>${esc(k)}</td></tr>`);}).join('')||'<tr><td colspan="3" class="vc">記載なし</td></tr>'
+  }</tbody></table></div>`;
+  $('#combo-out').innerHTML=html;
+}
+$('#combo-picker').addEventListener('click',e=>{
+  if(e.target.id==='cclear'){csel.clear();renderComboPicker();renderCombo();return;}
+  const b=e.target.closest('.chip'); if(!b) return; const id=b.dataset.id; csel.has(id)?csel.delete(id):csel.add(id);
+  renderComboPicker(); renderCombo(); const nb=document.getElementById('d-'+id); if(nb) nb.focus();
+});
+
+/* ===== tabs ===== */
+const TABS=['cond','ingr','combo'];
+function show(t){ if(!TABS.includes(t)) t='cond';
+  TABS.forEach(x=>{ $('#v-'+x).hidden = x!==t; $('#t-'+x).setAttribute('aria-selected', x===t); }); }
+document.querySelector('nav.tabs').addEventListener('click',e=>{const b=e.target.closest('button'); if(!b) return; const t=b.dataset.tab; if(location.hash!=='#'+t) location.hash=t; show(t);});
+window.addEventListener('hashchange',()=>show(location.hash.slice(1)));
+
+renderPicker(); renderCond(); $('#q').value=curKey; renderKeys(); renderIngr(); renderComboPicker(); renderCombo();
+show(location.hash.slice(1));
+</script>
+
+</body>
+</html>
