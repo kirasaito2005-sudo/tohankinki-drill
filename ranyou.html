@@ -1,0 +1,304 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<style>:root{color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style>
+<title>濫用防止8成分ドリル</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=BIZ+UDPGothic:wght@400;700&family=Dela+Gothic+One&family=JetBrains+Mono:wght@500&display=swap">
+<style>
+/* Layout: one narrow column like a 添付文書 card; sticky header with tabs, quiz card as the single focal object */
+:root{
+  --bg:#eef1f4; --surface:#ffffff; --ink:#18212b; --muted:#5a6672; --line:#d5dbe1;
+  --accent:#1f4e8c; --accent-ink:#ffffff; --warn:#f2c230; --warn-ink:#2a2100;
+  --ok:#1d7a4a; --ok-bg:#e3f3ea; --ng:#b3261e; --ng-bg:#fbe7e5;
+  --f-display:"Dela Gothic One","BIZ UDPGothic",system-ui,sans-serif;
+  --f-body:"BIZ UDPGothic","Hiragino Sans","Noto Sans JP",system-ui,sans-serif;
+  --f-mono:"JetBrains Mono",ui-monospace,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#11161c; --surface:#1a2129; --ink:#e7ecf1; --muted:#9aa6b2; --line:#2e3843;
+  --accent:#7fa8e6; --accent-ink:#0d1620; --warn:#e8bb2c; --warn-ink:#1e1800;
+  --ok:#6fd19c; --ok-bg:#16301f; --ng:#ff8a80; --ng-bg:#3a1a18; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#11161c; --surface:#1a2129; --ink:#e7ecf1; --muted:#9aa6b2; --line:#2e3843;
+  --accent:#7fa8e6; --accent-ink:#0d1620; --warn:#e8bb2c; --warn-ink:#1e1800;
+  --ok:#6fd19c; --ok-bg:#16301f; --ng:#ff8a80; --ng-bg:#3a1a18; color-scheme:dark}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:16px;line-height:1.65}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--surface)}
+.wrap{max-width:640px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:16px 48px}
+header{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--surface);border-bottom:1px solid var(--line)}
+header .in{max-width:640px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:12px 0;display:grid;gap:8px}
+.brand{display:flex;align-items:center;gap:10px}
+.badge{font-family:var(--f-display);background:var(--warn);color:var(--warn-ink);padding:2px 8px;border-radius:4px;font-size:13px;letter-spacing:.04em}
+h1{font-family:var(--f-display);font-weight:400;font-size:20px;margin:0;text-wrap:balance}
+nav{display:flex;gap:4px}
+nav button{flex:1;font:inherit;font-weight:700;background:none;border:0;border-bottom:3px solid transparent;color:var(--muted);padding:8px 4px;cursor:pointer}
+nav button[aria-selected="true"]{color:var(--accent);border-color:var(--accent)}
+button:focus-visible{outline:3px solid var(--warn);outline-offset:2px}
+.sec{display:grid;gap:16px}
+.label{font-size:12px;letter-spacing:.08em;color:var(--muted);font-weight:700}
+.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.mode{font:inherit;text-align:left;background:var(--surface);color:var(--ink);border:1px solid var(--line);border-radius:8px;padding:12px;cursor:pointer;display:grid;gap:4px}
+.mode:hover{border-color:var(--accent)}
+.mode b{font-size:15px}
+.mode small{color:var(--muted);font-size:12px;line-height:1.4}
+.mode .bar{height:4px;background:var(--line);border-radius:2px;overflow:hidden}
+.mode .bar i{display:block;height:100%;background:var(--ok)}
+.mode.primary{background:var(--accent);color:var(--accent-ink);border-color:var(--accent);grid-column:1/-1}
+.mode.primary small{color:var(--accent-ink);opacity:.85}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:20px;display:grid;gap:14px}
+.meta{display:flex;justify-content:space-between;align-items:center;gap:8px;font-family:var(--f-mono);font-size:13px;color:var(--muted);font-variant-numeric:tabular-nums}
+.tag{font-family:var(--f-body);font-size:12px;font-weight:700;border:1px solid var(--accent);color:var(--accent);border-radius:999px;padding:1px 10px}
+.q{font-size:17px;font-weight:700;margin:0}
+.choices{display:grid;gap:8px}
+.ch{font:inherit;text-align:left;background:var(--bg);color:var(--ink);border:1.5px solid var(--line);border-radius:8px;padding:12px 14px;cursor:pointer;display:flex;gap:10px;align-items:flex-start}
+.ch:hover:not(:disabled){border-color:var(--accent)}
+.ch .k{font-family:var(--f-mono);color:var(--muted);flex:none}
+.ch:disabled{cursor:default}
+.ch.right{background:var(--ok-bg);border-color:var(--ok)}
+.ch.wrong{background:var(--ng-bg);border-color:var(--ng)}
+.fb{border-left:4px solid var(--ok);padding:8px 12px;background:var(--ok-bg);border-radius:0 6px 6px 0}
+.fb.ng{border-color:var(--ng);background:var(--ng-bg)}
+.fb strong{display:block;margin-bottom:2px}
+.row{display:flex;gap:8px;flex-wrap:wrap}
+.btn{font:inherit;font-weight:700;border-radius:8px;padding:10px 18px;cursor:pointer;border:1.5px solid var(--accent);background:var(--accent);color:var(--accent-ink)}
+.btn.ghost{background:none;color:var(--accent)}
+.score{font-family:var(--f-display);font-size:44px;line-height:1}
+.miss{display:grid;gap:8px;padding:0;margin:0;list-style:none}
+.miss li{border-top:1px solid var(--line);padding-top:8px;font-size:14px}
+.miss li b{display:block}
+.drug{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:16px;display:grid;gap:6px}
+.drug h3{margin:0;font-size:17px;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.new{background:var(--warn);color:var(--warn-ink);font-size:11px;padding:1px 6px;border-radius:3px}
+.drug dl{margin:0;display:grid;grid-template-columns:5.5em minmax(0,1fr);gap:4px 10px;font-size:14px}
+.drug dt{color:var(--muted)}
+.drug dd{margin:0}
+.note{font-size:12px;color:var(--muted)}
+.snd{margin-left:auto;display:flex;gap:6px;flex:none}
+.tg{font:inherit;font-size:12px;font-weight:700;border-radius:999px;padding:4px 10px;cursor:pointer;border:1.5px solid var(--line);background:none;color:var(--muted)}
+.tg[aria-pressed="true"]{border-color:var(--accent);background:var(--accent);color:var(--accent-ink)}
+h1{min-width:0}
+@media (max-width:420px){h1{font-size:16px}}
+@media (max-width:420px){.grid{grid-template-columns:minmax(0,1fr)}}
+@media (prefers-reduced-motion:no-preference){.card{animation:in .18s ease-out}@keyframes in{from{transform:translateY(4px)}to{transform:none}}}
+</style>
+<style>.hublink{display:inline-block;font-size:.8rem;font-weight:700;color:inherit;opacity:.8;text-decoration:none;margin:2px 0 4px}.hublink:hover{opacity:1;text-decoration:underline}</style>
+</head>
+<body>
+<header><div class="in">
+  <div class="brand"><span class="badge">8成分</span><h1>濫用防止8成分ドリル</h1>
+    <div class="snd"><button id="t-bgm" class="tg" aria-pressed="true">♪ BGM</button><button id="t-se" class="tg" aria-pressed="true">効果音</button></div></div>
+  <a class="hublink" href="index.html">← してはいけないことドリル</a>
+  <nav role="tablist">
+    <button id="tab-drill" role="tab" aria-selected="true">演習</button>
+    <button id="tab-ref" role="tab" aria-selected="false">成分カード</button>
+  </nav>
+</div></header>
+
+<main class="wrap">
+  <section id="home" class="sec"></section>
+  <section id="quiz" class="sec" hidden></section>
+  <section id="ref" class="sec" hidden></section>
+</main>
+
+<script>
+const D={
+ eph:{n:"エフェドリン",cls:"アドレナリン作動成分",use:"鎮咳去痰薬（気管支拡張）",pt:"生薬マオウの主成分。交感神経を刺激し気管支を拡げる。依存性あり。心臓病・高血圧・糖尿病・甲状腺機能障害の人は相談。"},
+ meph:{n:"メチルエフェドリン",cls:"アドレナリン作動成分",use:"かぜ薬・鎮咳去痰薬",pt:"dl-メチルエフェドリン塩酸塩など。長期連用で依存。エスエスブロン錠などに配合。"},
+ pse:{n:"プソイドエフェドリン",cls:"アドレナリン作動成分",use:"鼻炎用内服薬・かぜ薬",pt:"他のアドレナリン作動成分より中枢作用が強く、不眠・神経過敏が出やすい。前立腺肥大による排尿困難の人は使用しない。セレギリン（MAO阻害薬）服用者は避ける。"},
+ cod:{n:"コデイン",cls:"麻薬性鎮咳成分（中枢性）",use:"鎮咳去痰薬・かぜ薬",pt:"延髄の咳嗽中枢に作用。12歳未満は使用しない。授乳中は服用しないか授乳を避ける。胎盤を通過。副作用に便秘。依存性あり。"},
+ dhc:{n:"ジヒドロコデイン",cls:"麻薬性鎮咳成分（中枢性）",use:"鎮咳去痰薬・かぜ薬",pt:"注意点はコデインとほぼ同じ。ジヒドロコデインセキサノールも対象。エスエスブロン錠・パブロンゴールドA等に配合。"},
+ dxm:{n:"デキストロメトルファン",cls:"非麻薬性鎮咳成分（中枢性）",use:"鎮咳去痰薬・かぜ薬",pt:"2026年に追加。依存症専門医療機関の調査でジヒドロコデインに次ぐ濫用実態。メジコンせき止め錠Pro等。",nw:1},
+ dph:{n:"ジフェンヒドラミン",cls:"抗ヒスタミン成分",use:"睡眠改善薬・鼻炎薬・乗物酔い防止薬",pt:"2026年に追加。睡眠改善薬は15歳未満に使わない。授乳中は乳児に昏睡のおそれ。抗コリン作用で排尿困難・緑内障に注意。外用剤は対象外。",nw:1},
+ bvu:{n:"ブロモバレリル尿素",cls:"鎮静成分（催眠鎮静）",use:"催眠鎮静薬・解熱鎮痛薬・乗物酔い防止薬",pt:"旧名ブロムワレリル尿素。少量でも眠気。反復摂取で依存。胎児障害の可能性があり妊婦は避ける。似た名前のアリルイソプロピルアセチル尿素は未指定。"}
+};
+const T={...Object.fromEntries(Object.entries(D).map(([k,v])=>[k,v.n])),rule:"販売ルール",mix:"横断"};
+// choices[0] is always the correct one; shuffled at display
+const Q=[
+ ["rule","2026年10月時点で、指定濫用防止医薬品の有効成分として指定されているのはいくつ？",["8成分","6成分","7成分","10成分"],"令和8年厚生労働省告示第32号で8成分。従来の6成分にデキストロメトルファンとジフェンヒドラミンが加わった。"],
+ ["rule","令和8年の見直しで新たに追加された2成分の組み合わせは？",["デキストロメトルファン・ジフェンヒドラミン","カフェイン・アリルイソプロピルアセチル尿素","デキストロメトルファン・無水カフェイン","ジフェンヒドラミン・アセトアミノフェン"],"濫用実態調査で上位だった未指定成分が追加された。"],
+ ["rule","次のうち、指定成分ではないものは？",["無水カフェイン","ブロモバレリル尿素","プソイドエフェドリン","ジヒドロコデイン"],"カフェインは濫用の報告はあるが、2026年10月時点では指定されていない。"],
+ ["rule","次のうち、指定成分ではないものは？",["アリルイソプロピルアセチル尿素","ブロモバレリル尿素","ジフェンヒドラミン","メチルエフェドリン"],"名前が似ているブロモバレリル尿素は指定、アリルイソプロピルアセチル尿素は未指定。"],
+ ["rule","次のうち、指定成分ではないものは？",["フェニレフリン","エフェドリン","メチルエフェドリン","プソイドエフェドリン"],"同じアドレナリン作動成分でも、フェニレフリンは指定されていない。"],
+ ["rule","次のうち、指定成分ではないものは？",["チペピジン","デキストロメトルファン","コデイン","ジヒドロコデイン"],"チペピジンは非麻薬性鎮咳成分だが未指定。鎮咳成分で指定されているのはコデイン・ジヒドロコデイン・デキストロメトルファン。"],
+ ["rule","薬機法上の「指定濫用防止医薬品」に関する規定の施行日は？",["令和8年5月1日","令和7年5月21日","令和5年4月1日","平成26年6月12日"],"令和7年5月21日は改正法の公布日。令和5年4月1日は旧制度で対象範囲が拡大された日、平成26年6月12日は旧制度の開始日。"],
+ ["rule","指定成分を含んでいても、指定濫用防止医薬品から除かれるものは？",["外用剤","内用液剤","かぜ薬","第1類医薬品"],"「外用剤を除く」とされている。ジフェンヒドラミン配合のかゆみ止めクリームなどは対象外。"],
+ ["rule","マオウなど生薬を主たる有効成分とする製剤の扱いは？",["指定濫用防止医薬品に含まれない","エフェドリンを含むので対象になる","漢方処方製剤のみ対象","18歳未満にのみ規制がかかる"],"指定医薬品は指定成分を有効成分として配合する製剤で、生薬を主たる有効成分とする製剤は含まれない。"],
+ ["rule","ジヒドロコデインリン酸塩のように、指定成分の「塩類」を含む製剤は？",["対象になる","対象外","リン酸塩のみ対象外","水和物のみ対象"],"「その水和物及びそれらの塩類」を有効成分として含有する製剤が対象。"],
+ ["rule","ジヒドロコデインセキサノールを配合した製剤は？",["ジヒドロコデインを含む混合物なので対象になる","別成分なので対象外","かぜ薬の場合のみ対象","外用なら対象"],"ジヒドロコデインセキサノール・リン酸ヒドロコデインセキサノールはジヒドロコデインを含む混合物として扱われる。"],
+ ["rule","18歳未満の購入者に、大容量製品や複数個を販売することは？",["できない","理由を確認すれば可","保護者が同伴なら可","薬剤師が対応すれば可"],"18歳未満には小容量製品1個のみ。大容量・複数個は販売不可。"],
+ ["rule","18歳未満の購入者に小容量製品を1個販売するときの情報提供の方法は？",["対面またはビデオ通話等","通常のインターネット販売で可","電話で可","情報提供は不要"],"18歳未満への小容量販売は「対面等」が必要。"],
+ ["rule","18歳以上の購入者に小容量製品を1個販売するときは？",["医薬品の区分に応じた通常の方法（ネット販売等も可）","必ず対面","販売不可","ビデオ通話のみ"],"18歳以上・小容量1個なら、その医薬品区分どおりの方法でよい。大容量・複数個になると対面等が必要。"],
+ ["rule","「小容量」とは、原則として何日分以下の成分量を含む1包装単位？",["5日分","3日分","7日分","14日分"],"原則5日分以下。ただし、かぜ薬・解熱鎮痛薬・鼻炎用内服薬は7日分以下。"],
+ ["rule","かぜ薬・解熱鎮痛薬・鼻炎用内服薬の場合、「小容量」は何日分以下？",["7日分","5日分","3日分","10日分"],"これらの薬効群だけ7日分。それ以外は5日分。"],
+ ["rule","「対面等」に含まれる方法は？",["ビデオ通話","電話のみ","チャット","メール"],"映像と音声で相手の状態を相互に確認できる方法が必要。電話のみ・チャット・メールは不可。"],
+ ["rule","販売時に氏名の確認が求められるのは？",["購入者が18歳未満のとき","すべての購入者","20歳未満のとき","初めて購入するとき"],"年齢は全員に確認、氏名は18歳未満の場合に確認する。"],
+ ["rule","販売時の確認事項として定められていないものは？",["購入者の職業","他の医薬品の使用状況","他の店舗での購入状況","大容量・複数個を買う理由"],"確認事項は年齢（18歳未満なら氏名も）、他の薬の使用状況、他店での購入状況、大容量・複数個購入の理由など。"],
+ ["rule","濫用による危害のおそれについての情報提供は、何を用いて行う？",["書面（電磁的記録を含む）","口頭のみでよい","店内掲示のみでよい","情報提供は任意"],"書面を用いて情報提供し、内容を理解したかと質問の有無を確認する。"],
+ ["rule","薬剤師・登録販売者による情報提供のあと、購入者について確認することは？",["内容を理解したことと質問の有無","署名","身分証のコピー","購入目的の記録の提出"],"理解の確認と質問の有無の確認が必要。"],
+ ["eph","エフェドリンの成分分類は？",["アドレナリン作動成分","抗コリン成分","抗ヒスタミン成分","中枢性鎮咳成分"],"交感神経系を刺激して気管支を拡張させる。"],
+ ["eph","生薬マオウ（麻黄）に含まれる主な成分は？",["エフェドリン","コデイン","ブロモバレリル尿素","ジフェンヒドラミン"],"マオウはエフェドリンを含むが、生薬主体の製剤は指定濫用防止医薬品には含まれない。"],
+ ["eph","エフェドリンが鎮咳去痰薬で果たす役割は？",["気管支を拡張させる","咳嗽中枢を抑える","痰の粘りを下げる","鼻粘膜の充血を取る"],"アドレナリン作動成分は交感神経を刺激し、気管支を拡げて咳や喘息症状を和らげる。"],
+ ["eph","アドレナリン作動成分（エフェドリン等）について、使用前に相談が必要とされない人は？",["胃潰瘍の診断を受けた人","高血圧の人","甲状腺機能障害の人","糖尿病の人"],"心臓病・高血圧・糖尿病・甲状腺機能障害は、交感神経刺激で症状を悪化させるおそれがある。"],
+ ["meph","dl-メチルエフェドリン塩酸塩の成分分類は？",["アドレナリン作動成分","麻薬性鎮咳成分","抗ヒスタミン成分","鎮静成分"],"エフェドリンと同じグループ。"],
+ ["meph","メチルエフェドリンを長期間連用した場合に注意すべきことは？",["薬物依存","骨粗しょう症","低血糖","聴力低下"],"アドレナリン作動成分は依存性があり、長期連用で依存につながる。"],
+ ["meph","エスエスブロン錠に配合されている指定成分の組み合わせは？",["ジヒドロコデイン・メチルエフェドリン","コデイン・プソイドエフェドリン","デキストロメトルファン・エフェドリン","ジフェンヒドラミン・ブロモバレリル尿素"],"国の調査で意図的摂取の相談件数が最多だった製品。"],
+ ["pse","プソイドエフェドリンが他のアドレナリン作動成分と比べて強いとされる作用は？",["中枢神経系に対する作用","抗コリン作用","鎮痛作用","去痰作用"],"中枢作用が強く、副作用として不眠や神経過敏が現れることがある。"],
+ ["pse","プソイドエフェドリン配合薬を使用しないこととされているのは？",["前立腺肥大による排尿困難がある人","花粉症の人","胃もたれがある人","軽い頭痛がある人"],"尿閉のおそれがあるため。心臓病・高血圧・糖尿病・甲状腺機能障害の人も使用しない。"],
+ ["pse","プソイドエフェドリンとの併用を避けるべき薬は？",["セレギリン塩酸塩（パーキンソン病治療薬）","アセトアミノフェン","ビタミンC","整腸剤"],"モノアミン酸化酵素阻害剤であるセレギリン等との併用で副作用が出やすくなる。"],
+ ["pse","プソイドエフェドリンが主に配合される薬効群は？",["鼻炎用内服薬","睡眠改善薬","胃腸薬","外用鎮痛薬"],"鼻粘膜の血管を収縮させ、鼻づまりを和らげる。かぜ薬にも配合される。"],
+ ["pse","パブロン鼻炎カプセルSαに含まれる指定成分は？",["プソイドエフェドリン","ジフェンヒドラミン","コデイン","デキストロメトルファン"],"鼻炎用内服薬の代表的な指定成分。"],
+ ["cod","コデインの成分分類は？",["麻薬性鎮咳成分","非麻薬性鎮咳成分","アドレナリン作動成分","抗ヒスタミン成分"],"中枢性の鎮咳成分で、麻薬性に分類される。"],
+ ["cod","コデインが作用する部位は？",["延髄の咳嗽中枢","気管支平滑筋","鼻粘膜","胃粘膜"],"中枢に作用して咳反射を抑える。"],
+ ["cod","コデイン類を含む医薬品を使用しないこととされている年齢は？",["12歳未満","6歳未満","15歳未満","18歳未満"],"呼吸抑制のリスクから12歳未満は使用しない。"],
+ ["cod","授乳中の人がコデイン類を使う場合の注意は？",["服用しないか、授乳を避ける","通常量なら問題ない","授乳後すぐ飲めばよい","半量にすればよい"],"母乳へ移行し、乳児でモルヒネ中毒が報告されている。"],
+ ["cod","コデイン類の副作用として知られるものは？",["便秘","下痢","多尿","頻脈"],"胃腸の運動を低下させるため便秘が起こりやすい。"],
+ ["cod","妊娠中の人にコデイン類が問題とされる理由は？",["血液－胎盤関門を通過して胎児へ移行する","子宮を強く収縮させる","母体の血糖値を上げる","鉄の吸収を妨げる"],"胎児へ移行することが知られている。"],
+ ["dhc","ジヒドロコデインの分類はコデインと比べてどうか？",["同じ麻薬性鎮咳成分","非麻薬性鎮咳成分","アドレナリン作動成分","去痰成分"],"注意事項（12歳未満、授乳、便秘、依存）もコデインとほぼ同じ。"],
+ ["dhc","依存症専門医療機関の実態調査で、主に濫用されていた市販薬成分として最も多く挙がったのは？",["ジヒドロコデイン","ジフェンヒドラミン","ブロモバレリル尿素","プソイドエフェドリン"],"ジヒドロコデインが最多で、デキストロメトルファンがそれに続いた。"],
+ ["dhc","パブロンゴールドA〈錠〉に含まれる指定成分の組み合わせは？",["ジヒドロコデイン・メチルエフェドリン","デキストロメトルファン・プソイドエフェドリン","コデイン・ジフェンヒドラミン","エフェドリン・ブロモバレリル尿素"],"かぜ薬も2023年の見直し以降、指定成分を含めば対象。"],
+ ["dxm","デキストロメトルファンの成分分類は？",["非麻薬性鎮咳成分","麻薬性鎮咳成分","抗ヒスタミン成分","アドレナリン作動成分"],"中枢性だが麻薬性ではない。それでも濫用実態から2026年に指定された。"],
+ ["dxm","指定成分のうち、中枢性鎮咳成分で「非麻薬性」のものは？",["デキストロメトルファン","コデイン","ジヒドロコデイン","メチルエフェドリン"],"コデイン・ジヒドロコデインは麻薬性、メチルエフェドリンはアドレナリン作動成分。"],
+ ["dxm","メジコンせき止め錠Proの有効成分は？",["デキストロメトルファン","ジヒドロコデイン","プソイドエフェドリン","ジフェンヒドラミン"],"意図的摂取の相談件数で上位に挙がった製品。"],
+ ["dxm","デキストロメトルファンが2026年に追加された主な理由は？",["指定外ながら濫用の実態が多く報告された","新しく承認された成分だから","麻薬に指定されたから","外用剤で事故が多発したから"],"依存症専門医療機関の患者調査で、指定外成分として上位だった。"],
+ ["dph","ジフェンヒドラミンの成分分類は？",["抗ヒスタミン成分","鎮静成分","アドレナリン作動成分","抗コリン成分のみ"],"抗ヒスタミン成分で、眠気の副作用を利用して睡眠改善薬にも使われる。"],
+ ["dph","ジフェンヒドラミンを主薬とする睡眠改善薬を使用しないこととされているのは？",["15歳未満の小児","12歳未満の小児","65歳以上","20歳未満"],"小児では神経過敏や興奮が起きやすい。"],
+ ["dph","授乳中の人がジフェンヒドラミンを使う場合の注意は？",["服用しないか授乳を避ける（乳児に昏睡のおそれ）","問題ない","授乳前に飲めばよい","外用なら授乳不可"],"母乳へ移行し、乳児に昏睡を起こすおそれがある。"],
+ ["dph","ジフェンヒドラミン配合の外用かゆみ止めクリームは？",["指定濫用防止医薬品に当たらない","18歳未満には販売不可","大容量のみ対象","対面販売が必要"],"外用剤は除外されている。"],
+ ["dph","睡眠改善薬（ジフェンヒドラミン）の対象となる症状は？",["一時的な不眠","慢性的な不眠","うつ病に伴う不眠","妊娠中の不眠"],"慢性不眠や妊娠中の睡眠障害は対象外。医療機関の受診を勧める。"],
+ ["dph","ジフェンヒドラミンの抗コリン作用により相談が必要な人は？",["排尿困難や緑内障がある人","高脂血症の人","貧血の人","花粉症の人"],"抗コリン作用で尿が出にくくなる、眼圧が上がるなどのおそれ。"],
+ ["dph","ウット（催眠鎮静薬）に含まれる指定成分の組み合わせは？",["ブロモバレリル尿素・ジフェンヒドラミン","コデイン・メチルエフェドリン","デキストロメトルファン・プソイドエフェドリン","エフェドリン・ジヒドロコデイン"],"アリルイソプロピルアセチル尿素も含むが、こちらは未指定。"],
+ ["bvu","ブロモバレリル尿素の成分分類は？",["鎮静成分","抗ヒスタミン成分","アドレナリン作動成分","鎮咳成分"],"脳の興奮を抑え、催眠鎮静薬や解熱鎮痛薬に配合される。"],
+ ["bvu","ブロモバレリル尿素の以前の告示上の名称は？",["ブロムワレリル尿素","ブロムヘキシン","ブロモクリプチン","バレリアン"],"平成26年の告示では「ブロムワレリル尿素」と表記されていた。"],
+ ["bvu","妊婦がブロモバレリル尿素を避けるべき理由は？",["胎児障害の可能性がある","母乳が止まる","子宮収縮を起こす","便秘が悪化する"],"胎児に障害を引き起こす可能性があるため、妊婦・妊娠の可能性がある人は避ける。"],
+ ["bvu","ブロモバレリル尿素が配合されることがある薬効群は？",["解熱鎮痛薬","鼻炎用点鼻薬","目薬","外用消炎鎮痛薬"],"鎮痛作用を補助する鎮静成分として配合される。乗物酔い防止薬にも配合例がある。"],
+ ["bvu","ブロモバレリル尿素を反復摂取した場合の問題は？",["依存を生じる","効果が強まり続ける","肝臓で蓄積して黄疸","聴力が上がる"],"反復摂取で依存を生じることが知られ、大量摂取による急性中毒も問題になる。"],
+ ["mix","次のうち、アドレナリン作動成分でないものは？",["ジヒドロコデイン","エフェドリン","メチルエフェドリン","プソイドエフェドリン"],"8成分のうちアドレナリン作動成分はエフェドリン・メチルエフェドリン・プソイドエフェドリンの3つ。"],
+ ["mix","次のうち、鎮咳成分でないものは？",["ブロモバレリル尿素","コデイン","ジヒドロコデイン","デキストロメトルファン"],"ブロモバレリル尿素は鎮静成分。"],
+ ["mix","8成分のうち、12歳未満は使用しないとされている成分は？",["コデイン","プソイドエフェドリン","ブロモバレリル尿素","メチルエフェドリン"],"コデイン・ジヒドロコデインが該当。"],
+ ["mix","8成分のうち、授乳中は服用しないか授乳を避けるとされる組み合わせは？",["コデイン類とジフェンヒドラミン","エフェドリンとプソイドエフェドリン","ブロモバレリル尿素とメチルエフェドリン","デキストロメトルファンとエフェドリン"],"コデイン類は乳児のモルヒネ中毒、ジフェンヒドラミンは乳児の昏睡のおそれ。"],
+ ["mix","「鼻づまり」を目的とした鼻炎用内服薬で最も典型的な指定成分は？",["プソイドエフェドリン","デキストロメトルファン","コデイン","ブロモバレリル尿素"],"血管収縮で鼻粘膜の充血・腫れを抑える。"],
+ ["mix","「寝つきが悪い」と睡眠改善薬を買いに来た客の商品に含まれやすい指定成分は？",["ジフェンヒドラミン","プソイドエフェドリン","コデイン","メチルエフェドリン"],"市販の睡眠改善薬の多くはジフェンヒドラミン塩酸塩が主薬。"],
+];
+const LS="ranyou8-v1";let S={};try{S=JSON.parse(localStorage.getItem(LS))||{}}catch(e){}
+const save=()=>{try{localStorage.setItem(LS,JSON.stringify(S))}catch(e){}};
+/* ---------- sound (Web Audio, all synthesized) ---------- */
+const SK="ranyou8-snd";let P={bgm:true,se:true};try{Object.assign(P,JSON.parse(localStorage.getItem(SK))||{})}catch(e){}
+let AC=null,seBus,bgmBus,bgmOn=false,nextT=0,step=0,timer=null;
+function ctx(){
+  if(!AC){const C=window.AudioContext||window.webkitAudioContext;if(!C)return null;AC=new C();
+    seBus=AC.createGain();seBus.gain.value=.45;seBus.connect(AC.destination);
+    bgmBus=AC.createGain();bgmBus.gain.value=.0001;bgmBus.connect(AC.destination)}
+  if(AC.state==="suspended")AC.resume();return AC}
+const hz=m=>440*Math.pow(2,(m-69)/12);
+function tone(f,t,d,type,vol,bus,flat){const o=AC.createOscillator(),g=AC.createGain();o.type=type;o.frequency.setValueAtTime(f,t);
+  g.gain.setValueAtTime(.0001,t);g.gain.linearRampToValueAtTime(vol,t+.012);
+  if(flat){g.gain.setValueAtTime(vol,t+d-.03);g.gain.linearRampToValueAtTime(.0001,t+d)}else g.gain.exponentialRampToValueAtTime(.0001,t+d);
+  o.connect(g);g.connect(bus);o.start(t);o.stop(t+d+.05)}
+function play(kind,rate=1){if(!P.se||!ctx())return;const t=AC.currentTime+.01;
+  if(kind==="ok"){ // ピンポーン
+    tone(hz(88),t,.45,"sine",.5,seBus);tone(hz(100),t,.3,"sine",.12,seBus);
+    tone(hz(84),t+.16,.9,"sine",.5,seBus);tone(hz(96),t+.16,.6,"sine",.12,seBus);
+  }else if(kind==="ng"){ // ブッブー
+    [[0,.16],[.24,.55]].forEach(([s,d])=>{tone(140,t+s,d,"square",.22,seBus,1);tone(147,t+s,d,"sawtooth",.12,seBus,1)});
+  }else if(kind==="tap"){tone(hz(81),t,.06,"triangle",.18,seBus);
+  }else if(kind==="end"){ // 成績に応じたジングル
+    const seq=rate>=.8?[72,76,79,84]:rate>=.5?[72,76,79]:[67,65,64];
+    seq.forEach((m,i)=>tone(hz(m),t+i*.12,i===seq.length-1?.8:.22,"triangle",.35,seBus));
+    if(rate>=.8)tone(hz(88),t+.36,.9,"sine",.15,seBus)}
+}
+// BGM: 4-bar loop C–Am–F–G, 92 BPM, soft arpeggio + bass
+const CH=[[60,64,67],[57,60,64],[53,57,60],[55,59,62]],PAT=[0,2,1,2,3,2,1,2],E8=60/92/2;
+function sched(){while(nextT<AC.currentTime+.35){const bar=Math.floor(step/8)%4,i=step%8,c=CH[bar],tn=[c[0],c[1],c[2],c[0]+12];
+    tone(hz(tn[PAT[i]]+12),nextT,E8*1.8,"sine",.5,bgmBus);
+    if(i===0||i===4)tone(hz(c[0]-12),nextT,E8*3.6,"triangle",.7,bgmBus);
+    if(i===0&&bar%2===0)tone(hz(c[2]+12),nextT,E8*7,"sine",.18,bgmBus);
+    nextT+=E8;step++}}
+function bgmStart(){if(bgmOn||!P.bgm||!ctx())return;bgmOn=true;nextT=AC.currentTime+.1;
+  bgmBus.gain.cancelScheduledValues(AC.currentTime);bgmBus.gain.setTargetAtTime(.13,AC.currentTime,.4);
+  sched();timer=setInterval(sched,100)}
+function bgmStop(){if(!bgmOn)return;bgmOn=false;clearInterval(timer);bgmBus.gain.setTargetAtTime(.0001,AC.currentTime,.15)}
+function sndUI(){[["#t-bgm","bgm"],["#t-se","se"]].forEach(([s,k])=>{const b=document.querySelector(s);b.setAttribute("aria-pressed",P[k]);b.title=P[k]?"オフにする":"オンにする"})}
+function sndSave(){try{localStorage.setItem(SK,JSON.stringify(P))}catch(e){}}
+window.addEventListener("pointerdown",()=>{ctx();if(P.bgm)bgmStart()},{once:true});
+window.addEventListener("keydown",()=>{ctx();if(P.bgm)bgmStart()},{once:true});
+document.addEventListener("visibilitychange",()=>{if(!AC)return;document.hidden?AC.suspend():AC.resume()});
+
+const $=s=>document.querySelector(s), shuf=a=>{a=[...a];for(let i=a.length-1;i>0;i--){const j=Math.random()*(i+1)|0;[a[i],a[j]]=[a[j],a[i]]}return a};
+const esc=s=>s.replace(/[&<>]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;"}[c]));
+function acc(ids){let c=0,t=0;ids.forEach(i=>{const r=S[i];if(r){c+=r.c;t+=r.c+r.w}});return t?c/t:0}
+function home(){
+  const groups=["rule","mix",...Object.keys(D)];
+  const weak=Q.map((q,i)=>i).filter(i=>S[i]&&S[i].last===0);
+  $("#home").innerHTML=`
+   <div class="grid">
+     <button class="mode primary" data-m="rand"><b>ランダム10問</b><small>全${Q.length}問から出題</small></button>
+     <button class="mode" data-m="all"><b>全問ぶっ通し</b><small>${Q.length}問・シャッフル</small></button>
+     <button class="mode" data-m="weak" ${weak.length?"":"disabled"}><b>間違えた問題</b><small>${weak.length?weak.length+"問を復習":"まだありません"}</small></button>
+   </div>
+   <div class="label">分野・成分別</div>
+   <div class="grid">${groups.map(g=>{const ids=Q.map((q,i)=>q[0]===g?i:-1).filter(i=>i>=0);
+     return `<button class="mode" data-m="${g}"><b>${T[g]}${D[g]&&D[g].nw?' <span class="new">追加</span>':''}</b><small>${ids.length}問・正答率 ${Math.round(acc(ids)*100)}%</small><span class="bar"><i style="width:${acc(ids)*100}%"></i></span></button>`}).join("")}</div>
+   <p class="note">2026年10月時点の制度（令和8年5月1日施行・令和8年厚生労働省告示第32号）と、登録販売者試験の手引きの記載をもとに作成。正答率はこの端末にだけ保存されます。</p>`;
+  $("#home").querySelectorAll("[data-m]").forEach(b=>b.onclick=()=>{play("tap");start(b.dataset.m)});
+}
+let run;
+function start(m){
+  let ids=Q.map((q,i)=>i);
+  if(m==="rand")ids=shuf(ids).slice(0,10);
+  else if(m==="all")ids=shuf(ids);
+  else if(m==="weak")ids=shuf(ids.filter(i=>S[i]&&S[i].last===0));
+  else ids=shuf(ids.filter(i=>Q[i][0]===m));
+  run={ids,k:0,ok:0,miss:[]};show("quiz");ask();
+}
+function ask(){
+  const i=run.ids[run.k],[g,q,ch,ex]=Q[i],opts=shuf(ch.map((t,j)=>({t,ok:j===0})));
+  $("#quiz").innerHTML=`<div class="card">
+    <div class="meta"><span class="tag">${T[g]}</span><span>${run.k+1} / ${run.ids.length}</span></div>
+    <p class="q">${esc(q)}</p>
+    <div class="choices">${opts.map((o,j)=>`<button class="ch" id="c${j}" data-ok="${o.ok?1:0}"><span class="k">${"ABCD"[j]}</span><span>${esc(o.t)}</span></button>`).join("")}</div>
+    <div id="fb"></div></div>
+    <div class="row"><button class="btn ghost" id="quit">やめる</button></div>`;
+  $("#quit").onclick=()=>{show("home");home()};
+  $("#quiz").querySelectorAll(".ch").forEach(b=>b.onclick=()=>{
+    const good=b.dataset.ok==="1";
+    $("#quiz").querySelectorAll(".ch").forEach(x=>{x.disabled=true;if(x.dataset.ok==="1")x.classList.add("right")});
+    play(good?"ok":"ng");
+    if(!good){b.classList.add("wrong");run.miss.push(i)}else run.ok++;
+    const r=S[i]||{c:0,w:0};good?r.c++:r.w++;r.last=good?1:0;S[i]=r;save();
+    $("#fb").innerHTML=`<div class="fb ${good?"":"ng"}"><strong>${good?"正解":"不正解　正解："+esc(ch[0])}</strong>${esc(ex)}</div>
+      <div class="row" style="margin-top:12px"><button class="btn" id="nx">${run.k+1<run.ids.length?"次の問題":"結果を見る"}</button></div>`;
+    $("#nx").focus();$("#nx").onclick=()=>{play("tap");run.k++;run.k<run.ids.length?ask():result()};
+  });
+}
+function result(){
+  const n=run.ids.length;play("end",run.ok/n);
+  $("#quiz").innerHTML=`<div class="card">
+    <div class="label">結果</div>
+    <div><span class="score">${run.ok}</span> <span class="meta" style="display:inline">/ ${n}問正解（${Math.round(run.ok/n*100)}%）</span></div>
+    ${run.miss.length?`<div class="label">間違えた問題</div><ul class="miss">${run.miss.map(i=>`<li><b>${esc(Q[i][1])}</b>正解：${esc(Q[i][2][0])}</li>`).join("")}</ul>`:"<p>全問正解。</p>"}
+    <div class="row">${run.miss.length?'<button class="btn" id="again">間違いだけ解き直す</button>':""}<button class="btn ghost" id="back">メニューへ</button></div></div>`;
+  const m=run.miss;if(m.length)$("#again").onclick=()=>{run={ids:shuf(m),k:0,ok:0,miss:[]};ask()};
+  $("#back").onclick=()=>{show("home");home()};
+}
+function ref(){
+  $("#ref").innerHTML=Object.values(D).map(d=>`<div class="drug"><h3>${d.n}${d.nw?'<span class="new">2026年追加</span>':''}</h3>
+    <dl><dt>分類</dt><dd>${d.cls}</dd><dt>主な配合先</dt><dd>${d.use}</dd><dt>ポイント</dt><dd>${d.pt}</dd></dl></div>`).join("")+
+   `<div class="drug"><h3>販売ルールの要点</h3><dl>
+    <dt>18歳未満</dt><dd>小容量1個のみ。対面またはビデオ通話等で情報提供。氏名も確認。</dd>
+    <dt>18歳以上</dt><dd>小容量1個は区分どおり（ネット販売も可）。大容量・複数個は対面等＋理由確認。</dd>
+    <dt>小容量</dt><dd>5日分以下（かぜ薬・解熱鎮痛薬・鼻炎用内服薬は7日分以下）。</dd>
+    <dt>除外</dt><dd>外用剤、生薬を主たる有効成分とする製剤。</dd>
+    <dt>情報提供</dt><dd>書面で濫用の危険を伝え、理解と質問の有無を確認。</dd></dl></div>`;
+}
+function show(id){["home","quiz","ref"].forEach(s=>$("#"+s).hidden=s!==id);
+  $("#tab-drill").setAttribute("aria-selected",id!=="ref");$("#tab-ref").setAttribute("aria-selected",id==="ref");scrollTo(0,0)}
+$("#tab-drill").onclick=()=>{show("home");home()};
+$("#tab-ref").onclick=()=>{ref();show("ref")};
+$("#t-bgm").onclick=()=>{P.bgm=!P.bgm;sndSave();sndUI();P.bgm?bgmStart():bgmStop()};
+$("#t-se").onclick=()=>{P.se=!P.se;sndSave();sndUI();play("tap")};
+sndUI();home();
+</script>
+</body>
+</html>
