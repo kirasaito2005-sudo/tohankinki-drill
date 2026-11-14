@@ -64,6 +64,13 @@ button:focus-visible,select:focus-visible,input:focus-visible,.card:focus-visibl
 .card{perspective:1600px;cursor:pointer;min-height:360px;position:relative}
 .inner{position:relative;min-height:360px;transition:transform .5s cubic-bezier(.2,.7,.2,1);transform-style:preserve-3d;display:grid}
 .card.flipped .inner{transform:rotateY(180deg)}
+.card{touch-action:pan-y}
+.card.dragging{user-select:none;-webkit-user-select:none}
+.card.fly{transition:transform .25s ease-in,opacity .25s ease-in}
+.card.back-snap{transition:transform .2s ease-out}
+.swipe-tag{position:absolute;top:18px;z-index:3;pointer-events:none;opacity:0;font-weight:700;font-size:1.1rem;padding:4px 14px;border:3px solid currentColor;border-radius:10px;background:var(--surface)}
+.swipe-tag.ok{left:18px;color:var(--ok);transform:rotate(-12deg)}
+.swipe-tag.ng{right:18px;color:var(--ng);transform:rotate(12deg)}
 .face{grid-area:1/1;backface-visibility:hidden;-webkit-backface-visibility:hidden;background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:22px 22px 18px;display:flex;flex-direction:column;gap:12px;min-width:0;box-shadow:0 1px 0 var(--line)}
 .back{transform:rotateY(180deg)}
 .face[data-t="成分"]{border-top:5px solid var(--t-seibun)}
@@ -228,8 +235,39 @@ function render(){
     <div class="inner">
       <div class="face front" data-t="${d.t}">${meta}${front}</div>
       <div class="face back" data-t="${d.t}">${meta}<div class="name">${esc(d.n)}${d.y?` <span class="yomi">${esc(d.y)}</span>`:""}</div>${backHTML(d)}</div>
-    </div></div>`;
-  $("card").onclick=flip;
+    </div><div class="swipe-tag ok">覚えた</div><div class="swipe-tag ng">まだ</div></div>`;
+  $("card").onclick=()=>{if($("card").dataset.swiped){delete $("card").dataset.swiped;return}flip()};
+  swipe($("card"));
+}
+/* Swipe: right = 覚えた, left = まだ. Taps still flip; vertical scrolling is left to the browser. */
+function swipe(c){
+  const tOk=c.querySelector(".swipe-tag.ok"),tNg=c.querySelector(".swipe-tag.ng");
+  let id=null,x0=0,y0=0,dx=0,drag=false;
+  const show=x=>{tOk.style.opacity=Math.max(0,Math.min(1,x/100));tNg.style.opacity=Math.max(0,Math.min(1,-x/100))};
+  const reset=()=>{c.classList.remove("dragging");c.classList.add("back-snap");c.style.transform="";show(0);setTimeout(()=>c.classList.remove("back-snap"),200)};
+  c.addEventListener("pointerdown",e=>{if(e.button>0)return;id=e.pointerId;x0=e.clientX;y0=e.clientY;dx=0;drag=false});
+  c.addEventListener("pointermove",e=>{
+    if(e.pointerId!==id)return;
+    const mx=e.clientX-x0,my=e.clientY-y0;
+    if(!drag){
+      if(Math.abs(mx)>10&&Math.abs(mx)>Math.abs(my)){drag=true;c.classList.add("dragging");try{c.setPointerCapture(id)}catch(_){}}
+      else if(Math.abs(my)>10){id=null;return}
+      else return;
+    }
+    dx=mx;c.style.transform=`translateX(${dx}px) rotate(${dx/20}deg)`;show(dx);
+  });
+  const end=e=>{
+    if(e.pointerId!==id)return;id=null;
+    if(!drag)return;
+    c.dataset.swiped="1";setTimeout(()=>{delete c.dataset.swiped},60);
+    if(e.type==="pointerup"&&Math.abs(dx)>Math.min(100,c.offsetWidth*.25)){
+      const ok=dx>0,s=ok?1:-1;
+      c.classList.remove("dragging");c.classList.add("fly");
+      c.style.transform=`translateX(${s*(window.innerWidth+c.offsetWidth)}px) rotate(${s*25}deg)`;c.style.opacity="0";
+      setTimeout(()=>judge(ok),250);
+    }else reset();
+  };
+  c.addEventListener("pointerup",end);c.addEventListener("pointercancel",end);
 }
 function flip(){st.flipped=!st.flipped;const c=$("card");if(c)c.classList.toggle("flipped",st.flipped)}
 function go(k){if(!st.deck.length)return;st.i=(st.i+k+st.deck.length)%st.deck.length;st.flipped=false;render()}
